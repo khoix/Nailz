@@ -3,15 +3,18 @@ import { createServer, preview } from 'vite';
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
-/** Capture the composited browser view without requesting a new off-screen GPU surface. */
+/** Capture the composited view and explicitly supply two render frames to the paused clock. */
 export async function captureScreenshot(page, path) {
  const session=await page.context().newCDPSession(page);
  let timeout;
  try {
-  const image=await Promise.race([
+  const capture=Promise.race([
    session.send('Page.captureScreenshot',{format:'png',fromSurface:false,captureBeyondViewport:false}),
    new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error(`Screenshot capture timed out: ${path}`)),20000);}),
   ]);
+  // A frozen WebGL frame can leave Chromium 151 waiting for a compositor frame.
+  // Bound the advance to 32ms; never resume wall time or pump until a test happens to pass.
+  const [image]=await Promise.all([capture,page.clock.runFor(32)]);
   await writeFile(path,Buffer.from(image.data,'base64'));
  } finally {clearTimeout(timeout);await session.detach().catch(()=>{});}
 }
