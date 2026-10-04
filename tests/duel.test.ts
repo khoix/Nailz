@@ -6,28 +6,28 @@ function aim(game: Duel, qualityTime = 1.5/2.15) {
   game.tick(.4);game.tick(.45);game.tap();game.tick(.45);game.tap();game.tick(qualityTime);game.tap();game.tick(.4);
 }
 test('perfect normal action sequence can finish a fresh nail',()=>{
-  const g=new Duel();g.start();aim(g);assert.equal(g.snapshot.phase,'READY_TO_SWING');
+  const g=new Duel(9271,{firstStarter:'p1'});g.start();aim(g);assert.equal(g.snapshot.phase,'READY_TO_SWING');
   assert.equal(g.swing(1),true);g.tick(.24);assert.equal(g.snapshot.nail.depth,1);
   assert.equal(g.snapshot.nail.winner,'p1');assert.equal(g.snapshot.nail.strikeCount,1);
   g.tick(2);assert.equal(g.snapshot.phase,'ROUND_RESULT');assert.equal(g.snapshot.nail.strikeCount,1);
 });
 test('one tap cannot lock two stages; short double tap is ignored',()=>{
- const g=new Duel();g.start();g.tick(.85);g.tap();g.tap();assert.equal(g.snapshot.phase,'TARGET_X');
+ const g=new Duel(9271,{firstStarter:'p1'});g.start();g.tick(.85);g.tap();g.tap();assert.equal(g.snapshot.phase,'TARGET_X');
  g.tick(.05);g.tap();assert.equal(g.snapshot.phase,'TARGET_X');
 });
 test('reticle times out once and never replays',()=>{
- const g=new Duel();g.start();g.tick(.85);g.tap();g.tick(.45);g.tap();g.tick(2);
+ const g=new Duel(9271,{firstStarter:'p1'});g.start();g.tick(.85);g.tap();g.tick(.45);g.tap();g.tick(2);
  assert.equal(g.snapshot.phase,'READY_TO_SWING');assert.equal(g.snapshot.quality,0);
  g.tap();g.tick(5);assert.equal(g.snapshot.quality,0);g.swing(1);assert.equal(g.snapshot.pending!.powerCap,.12);
 });
 test('pause freezes all timers, resume countdown protects a pending swing',()=>{
- const g=new Duel();g.start();aim(g);g.swing(.4);g.tick(.1);const before=g.snapshot;
+ const g=new Duel(9271,{firstStarter:'p1'});g.start();aim(g);g.swing(.4);g.tick(.1);const before=g.snapshot;
  g.pause();g.tick(20);assert.equal(g.snapshot.elapsed,before.elapsed);assert.equal(g.snapshot.nail.strikeCount,0);
  g.resume();g.tick(DUEL_TIMING.resume);assert.equal(g.snapshot.nail.strikeCount,0);
  g.tick(.14);assert.equal(g.snapshot.nail.strikeCount,1);g.tick(.1);assert.equal(g.snapshot.nail.strikeCount,1);
 });
 test('operator alternates on same nail and uses the shared strike result',()=>{
- const g=new Duel(12);g.start();aim(g);g.swing(.1);g.tick(.24+.7);
+ const g=new Duel(12,{firstStarter:'p1'});g.start();aim(g);g.swing(.1);g.tick(.24+.7);
  assert.equal(g.snapshot.actor,'p2');const depth=g.snapshot.nail.depth;
  g.tick(.85);const result=g.snapshot.pending!;assert.equal(result.actor,'p2');assert.equal(result.depthBefore,depth);
  g.tick(.24);assert.equal(g.snapshot.nail.depth,result.depthAfter);assert.equal(g.snapshot.nail.strikeCount,2);
@@ -37,7 +37,7 @@ test('operator alternates on same nail and uses the shared strike result',()=>{
 test('same sequence at different frame intervals gives same resolved strike',()=>{
  const outputs=[];
  for(const hz of [30,60,120]) {
-  const g=new Duel();g.start();aim(g);g.swing(.3);
+  const g=new Duel(9271,{firstStarter:'p1'});g.start();aim(g);g.swing(.3);
   let remaining=2.4;
   while(remaining>1e-9){const dt=Math.min(1/hz,remaining);g.tick(dt);remaining-=dt;}
   outputs.push(g.snapshot.nail);
@@ -45,7 +45,7 @@ test('same sequence at different frame intervals gives same resolved strike',()=
  assert.deepEqual(outputs[0],outputs[1]);assert.deepEqual(outputs[1],outputs[2]);
 });
 test('restart discards pending impact and pause state',()=>{
- const g=new Duel();g.start();aim(g);g.swing(1);g.pause();g.restart();g.tick(.4);
+ const g=new Duel(9271,{firstStarter:'p1'});g.start();aim(g);g.swing(1);g.pause();g.restart(12);g.tick(.4);
  assert.equal(g.snapshot.phase,'TARGET_Y');assert.equal(g.snapshot.nail.strikeCount,0);assert.equal(g.snapshot.paused,false);
 });
 test('swipe power is viewport-normalized and sampling-density independent',()=>{

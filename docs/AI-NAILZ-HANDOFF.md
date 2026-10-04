@@ -1,39 +1,41 @@
 # Nailz! handoff
 
-## Completed
-- **E2 single-nail duel implemented. Next execution: E3**, after verifying this commit on origin and considering the physical playtest limitation below.
-- Reuse `codex/nailz-arcade-build` in https://github.com/khoix/Nailz. E1 was merged by the user into main (`b03505b`); E2 started by fast-forwarding to that identical source tree.
-- Full human sequence: Y line -> X line -> one-pass focus -> downward swipe -> animated impact. Same nail alternates between player and seeded operator until a finishing strike. Restart creates a fresh duel.
-- Normal app runs the duel; development fixture lab is at `/?lab` and excluded from production.
-- Primitive art remains intentional. Full matches/pass-and-play, final character/art/effects, title/preload/cache/music implementations stay in their planned later executions. User supplies music later; no generated music exists.
+## Checkpoint
+- **E3 implemented. Next execution: E4 only**, after verifying origin and reading the human playtest limitation below.
+- Repository: https://github.com/khoix/Nailz, branch `codex/nailz-arcade-build`. E3 starts from E2 commit `e3f77ea4efcc8b0f14921dce3163784c8d02fbec`.
+- Complete five-nail matches in Solo — vs. Operator and 2 Players — Pass & Play. Random first starter, alternating nail starters, all five nails even after an early clinch, round/match results, scoring, rematch, and mode selection outside matches.
+- Local rematches swap the first starter. Both participants use E2's existing Y/X/focus/swipe pipeline and identical timing. The operator has no competitive local turns. Existing primitive scene remains temporary; operator character/host art comes later.
+- User supplies music later. No music was generated or substituted. Dynamic Tap to Play, preload/cache, gesture-initiated audio, final art, and menu polish remain in their planned executions.
 
-## Architecture / decisions
-- `src/game/duel.ts`: DOM-free single-nail simulation. `tick(seconds)` consumes phase boundaries; a result resolves before the swing and applies once at the .24s contact boundary. Action ID + applied ID and the existing depth/count guard prevent duplicate impacts, including after pause. There are no delayed callbacks to leak into a restarted duel.
-- `src/ui/duelUI.ts`: synchronizes the simulation before pointer actions, captures one pointer, consumes one stage per gesture, rejects short double taps, ignores multitouch, and preserves locked aim/focus on cancelled/invalid swipes. Pause, visibility loss, context loss, resize, and restart clear gesture ownership. Resize pauses instead of reinterpreting an in-progress gesture.
-- Pause freezes the phase clock; resume has an .8s lead-in. Explicit readiness delays input until the .32s camera movement is finished. Operator aim is .85s; impact feedback .7s; straightening .45s.
-- Axis position uses elapsed-time cosine, period 1.8s, range ±1.8 head radii. Reticle makes one 1s inward pass; ideal at 1.5/2.15 seconds, full-focus window ±35ms, then quality falls continuously. Timeout sets zero quality and proceeds without replay.
-- `src/input/swipe.ts`: viewport-normalized distance/velocity and path continuity. Valid downward swipe >=3.5% viewport height; full requested power needs >=25% height and >=1.15 viewport heights/second with a straight path. Weak valid swipes count; upward/tiny/horizontal gestures retry the same swing. Reticle cap still bounds requested power.
-- `src/scene/createScene.ts`: consumes snapshots only. Camera interpolation, .24s accelerating hammer path, 90ms depth/bend presentation, rebound, and straightening cannot alter simulation outcomes. Target view hides the hammer and remains still during timing stages. Circular striking face radius equals .65 nail-head radii, matching the resolver's 1.65 contact envelope. Aim +Y maps to world -Z.
-- Gold/cyan point and moving lines show the selected contact. Operator's sampled aim, quality, and power feed the same resolver; no hidden damage. Its cyan grip distinguishes turns. The human starts this E2 duel; randomized starters/full scoring are E3.
-- Existing E1 formulas and startup/asset/audio contracts remain. `MUSIC=null`. No AI character, SFX, music, final title, or cache implementation has been added early.
+## Architecture and rules
+- `src/game/duel.ts` remains the single DOM-free state machine. Participant controller type replaces hardcoded player-side checks. `advanceRound()` resets the nail and picks the alternating starter; the fifth result leads to MATCH_RESULT. There are no delayed AI callbacks to survive restart or mode changes.
+- All results resolve through `strike.ts` and apply once at the contact boundary using action IDs plus the resolver's stale-result guard. Nails won determine the match winner; secondary points never override it.
+- Secondary points: rounded depth delta × 100, +100 finishing, +50 one-hit, −10 complete miss or −5 contact bend above .08 radians. Each actor owns only their own strike's awards/penalties. Negative totals are allowed. Details and rationale in `docs/validation/e3/BALANCE.md`.
+- Local turns enter NAIL_SETUP then TURN_HANDOFF. `ready()` consumes readiness and begins a fresh .4s setup lead-in before Y aiming. Handoff clocks are frozen indefinitely. First turn says who starts; different-person turns say Pass to Player N; same-person next-nail starts say Player N — Next nail.
+- `duelUI.ts` tracks pointers on controls and gameplay. Readiness needs a new down/up on the ready control with no other active pointer. Old fingers, multitouch, cancelled presses, and gestures crossing phase boundaries cannot aim or ready. Lost pointer capture cancels gesture ownership without treating a held finger as released. The keyboard can activate Ready only with no active pointer.
+- Pause/background/rotation/context loss clear pending gestures and preserve the intended recipient. Resume has E2's .8s countdown and never auto-readies a handoff. Rotation immediately renders the pause card.
+- Mode selection is on the initial screen and reachable again from match results. Starting a different mode creates a fresh Duel and resets pending input/AI state. Optional player names, saved records, tutorial, final title, and settings remain E7.
+- Temporary HUD shows named participants, nail count, points, and nail-depth progress. Scene uses controller type to show AI markers, so Player 2 receives normal human aim controls.
 
-## Important files / commands
-- New: `src/game/duel.ts`, `src/input/swipe.ts`, `src/ui/duelUI.ts`, `tests/duel.test.ts`, `tests/duel-browser.mjs`.
-- Extended: scene, app entry, styles, browser fixture test. `README.md` describes controls and tests.
-- `npm run check`: typecheck + unit tests + production build.
-- `npm run test:browser`: E1 fixture regression at `/?lab`.
-- `npm run test:duel-browser`: normal UI input integration with Playwright's controlled clock.
-- Browser install: `npx playwright install chromium`; this environment uses a scratch Chromium via `NAILZ_CHROMIUM_PATH` and its colocated software-rendering libraries.
+## AI and balance
+- `src/game/ai.ts`: Easy/Normal/Hard/Champion use symmetric triangular X/Y error, uniform bounded focus/power, and a reachable perfect-input component. Presets never inspect score/depth/opponent and never multiply damage.
+- Error scales: 1.8 / .95 / .5 / .22. Minimum focus: .3 / .45 / .7 / .86. Minimum requested power: .4 / .55 / .75 / .9. Perfect-input probabilities: .001 / .006 / .025 / .22.
+- `npm run balance` reproduces `docs/validation/e3/balance.json`: 20,000 fresh-nail samples and 2,000 full matches per preset, seed 20261004. A fixed Normal sampler is the simulated human; this is not empirical human performance.
+- Simulated operator match wins: 17.05%, 49.45%, 64.35%, 70.70%. Mean strikes per match: 24.53, 18.02, 13.60, 10.15. Champion fresh-nail one-hit rate: 21.81%.
+- Known risk: strong partial strikes can donate an easy finish. Champion win rate differs substantially by first starter (60.2% when operator starts, 81.2% when proxy human starts). Initial 8% perfect-input Champion was weaker than Hard; 22% gives useful model separation. Do not add hidden comeback/depth-aware damage to obscure this. Human playtests must decide whether Champion one-hit frequency and match pacing feel right.
 
-## Validation / evidence
-- 23 unit tests pass: E1 invariants plus perfect input sequence, double-tap guard, reticle timeout, freeze/resume/contact uniqueness, operator alternation, frame-rate independence at 30/60/120Hz, restart isolation, and swipe normalization/sampling independence.
-- Production build and typecheck pass; JS is about 552KB / 140KB gzip. Existing large-chunk warning remains for E8 profiling.
-- Browser integration passed with no page errors: normal pointer-controlled one-hit finish, real touch taps, weak mouse swipe, cancelled pointer, timeout, pause/resume, AI returning control, and landscape pause. E1 three-view/resizing tests still pass.
-- Screenshots and a short 10fps gameplay recording in `docs/validation/e2/` document the real UI/camera/swing sequence. Recording uses controlled time; it is visual evidence, not a frame-rate benchmark.
-- Core gate: automated controls prove reachable one-hit finish, weaker swipe response, visible bend/straightening, and a complete duel. **Human phone feel/playtesting remains pending**, as do Safari/Android hardware, thermal performance, and true physical touch-swiping. Do not report emulation as physical-device validation. Get those observations before committing to full art if feel defects appear.
+## Validation
+- `npm run check`: typecheck, 31 unit tests, production build. Includes complete solo matches at every difficulty, complete local matches, all-five-round enforcement, same-person next-nail readiness, pause freezes, identical local difficulty behavior, score ownership, point/nail priority, exactly-once awards, rematch reset/swap, seeded inputs, and E1/E2 strike/input regressions.
+- `npm run test:duel-browser`: preserved E2 controls coverage with E3 round transitions. Perfect pointer finish, actual touch taps, reticle timeout, cancelled swipe, weak swipe, solo operator return, and rotation.
+- `npm run test:match-browser`: normal UI pointer controls for two full local matches, old-finger readiness blocking, cancelled ready, pause/background/rotation, ready tap consumption, same-person next-nail label, no automatic local strike, rematch swap, score ownership, and mode switch back to solo.
+- `npm run test:browser`: existing E1 fixture regression; unchanged script.
+- Browser screenshots go to ignored `artifacts/e3/`; selected verified evidence is copied to `docs/validation/e3/`. Controlled-clock screenshots are visual/behavior evidence, not frame-rate benchmarks.
+- Software-rendered Chromium is available in this workspace via `NAILZ_CHROMIUM_PATH=/workspace/scratch/2da0bc65e702/nailz-qa/chromium` and `LD_LIBRARY_PATH=/workspace/scratch/2da0bc65e702/nailz-qa`. Tests start their own loopback Vite server. Standard environments can use Playwright's installed Chromium.
+- **Physical iPhone/Android, Safari, human fun/comfort, and two-person phone passing remain untested.** Automated matches do not establish the human quality gate. Gather physical observations before committing to final art if input feel issues appear.
+- Existing bundle-size warning remains (~558KB JS /142KB gzip); optimization is E8, not grounds for broad premature refactoring.
 
-## Next execution
-E3 only: reuse `Duel`/input/presentation contracts to add five-nail orchestration, starter policy, score attribution, difficulty inputs, and complete two-human pass-and-play handoffs. Avoid a second copy of the human controls. Update the current single-nail controller with a participant/controller boundary rather than branching physics. Preserve pause/gesture guards and exactly-once application. Read E3 in `docs/NAILZ-BUILD-PLAN.md` and the pass-and-play section before implementation.
+## E4 starting point
+Read E4 in `docs/NAILZ-BUILD-PLAN.md`: carnival environment and lighting. Preserve the tested match/input/physics contracts, target-camera stability, readable handoff cards, named identities, and exact shared-nail scoring. Do not begin E4 automatically. The current scene is primitive and should not be represented as the final stunning arcade art.
 
 ## Persistence
-Shell Git has read access but no push credentials. Use connected GitHub Git Data APIs: upload changed blobs/tree, create commit with the verified branch head as parent, update the same ref without force, fetch, compare tree SHA, and align the local branch only after exact content verification. Do not initialize main or merge by default. Preserve the local checkpoint before aligning API-created commit history.
+Shell Git has read access but no push credentials. Use connected GitHub Git Data APIs on this feature branch: upload changed blobs/tree, create a commit with the verified branch head as parent, update the same ref without force, fetch, compare tree SHA, and align local history only after exact content verification. Preserve the local checkpoint before aligning API-created history. Do not initialize main, merge, or deploy by default.

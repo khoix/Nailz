@@ -14,7 +14,9 @@
     "test": "node --test tests/*.test.ts",
     "check": "npm run typecheck && npm test && npm run build",
     "test:browser": "node tests/browser-smoke.mjs",
-    "test:duel-browser": "node tests/duel-browser.mjs"
+    "test:duel-browser": "node tests/duel-browser.mjs",
+    "test:match-browser": "node tests/match-browser.mjs",
+    "balance": "node tests/balance.ts"
   },
   "dependencies": {
     "three": "0.186.1"

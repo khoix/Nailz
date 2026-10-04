@@ -127,7 +127,7 @@ export function createScene(canvas: HTMLCanvasElement) {
   function present(snapshot: DuelSnapshot, dt: number) {
     const { phase, elapsed, actor, pending } = snapshot;
     const inTarget = phase === 'NAIL_SETUP' || phase === 'TARGET_Y' || phase === 'TARGET_X' || phase === 'RETICLE';
-    const requestedView: CameraView = phase === 'MATCH_INTRO' || phase === 'ROUND_RESULT' ? 'booth' : inTarget ? 'target' : 'impact';
+    const requestedView: CameraView = ['MATCH_INTRO','ROUND_RESULT','MATCH_RESULT','TURN_HANDOFF'].includes(phase) ? 'booth' : inTarget ? 'target' : 'impact';
     // Draw impact insertion and bend over 90ms; model already owns the result.
     let visibleNail = snapshot.nail;
     if (phase === 'IMPACT_RESOLUTION' && pending) {
@@ -172,7 +172,7 @@ export function createScene(canvas: HTMLCanvasElement) {
       hammer.position.copy(point).add(new THREE.Vector3(.35 * lift, lift, 0));
       hammer.rotation.set(0, 0, angle);
     }
-    if (actor === 'p2' && phase === 'TARGET_Y') {
+    if (!snapshot.isHuman && phase === 'TARGET_Y') {
       marker.visible = true;
       marker.position.copy(nailLocalToWorld(snapshot.aim.x, snapshot.aim.y, headHeight + .008));
       contactMaterial.color.set('#53e2e9');

@@ -1,6 +1,6 @@
 # Nailz!
 
-A mobile-first precision hammering arcade game. Solo versus the carnival operator and two-player pass-and-play are planned. **Current milestone: E2 single-nail duel** — playable timing, swipe input, animated contact, and an alternating computer opponent. Five-nail matches and pass-and-play orchestration arrive in E3.
+A mobile-first precision hammering arcade game. **Current milestone: E3 complete five-nail matches** — solo versus four operator difficulties, or two-player pass-and-play on one phone. Timing controls, animated contact, scoring, rematches, and protected handoffs are playable. Art and menus are still temporary.
 
 ## Run
 
@@ -20,7 +20,7 @@ npm run build
 npm run preview
 ```
 
-Development mode at `/?lab` shows **Strike Lab**: choose a fixture, resolve against a fresh nail, switch cameras, straighten, or reset. Production builds exclude the inspector and fixtures. The normal development and production views run the single-nail duel. Tap to lock the two moving axes, tap when the focus rings match, then swipe downward. Pause and restart are available; turning the device or backgrounding the page pauses the duel.
+Development mode at `/?lab` shows **Strike Lab**: choose a fixture, resolve against a fresh nail, switch cameras, straighten, or reset. Production builds exclude the inspector and fixtures. The normal development and production views run complete five-nail matches. Tap to lock the two moving axes, tap when the focus rings match, then swipe downward. Pause and restart are available; turning the device or backgrounding the page pauses the match.
 
 ## Architecture
 
@@ -38,7 +38,7 @@ Music will be supplied by the user later. `MUSIC` remains null; no generated or 
 
 ## Continue
 
-Read `docs/AI-NAILZ-HANDOFF.md`, then the relevant execution in `docs/NAILZ-BUILD-PLAN.md`. Preserve the same branch. The plan contains the complete scope, visual direction, and acceptance criteria. Single-nail controls, AI turn loop, and basic animation are implemented. Pass-and-play and full match orchestration start in E3.
+Read `docs/AI-NAILZ-HANDOFF.md`, then the relevant execution in `docs/NAILZ-BUILD-PLAN.md`. Preserve the same branch. The plan contains the complete scope, visual direction, and acceptance criteria. Match orchestration, four AI input presets, and pass-and-play are implemented. E4 is the carnival environment and lighting pass; do not start it without a new execution request.
 
 ## Browser smoke check
 
@@ -50,3 +50,11 @@ npm run test:browser
 The test starts its own loopback Vite server, checks fixtures and camera controls at portrait/landscape/desktop sizes, and writes screenshots into ignored `artifacts/`. `NAILZ_CHROMIUM_PATH` can select an already installed Chromium. Software-rendered headless checks do not replace physical iPhone/Android testing.
 
 E2 integration check: `npm run test:duel-browser` uses normal browser pointer controls with a controlled clock to verify a perfect finish, timeout, pause, cancelled swipe, operator alternation, and rotation. Unit tests cover frame-rate-independent resolution and swipe normalization. Physical-phone comfort and human playtesting remain pending.
+
+## Match rules and local play
+
+Choose **Solo — vs. Operator** with Easy, Normal, Hard, or Champion, or **2 Players — Pass & Play**. Every match plays all five shared nails. The finisher takes the nail; nails won determine the winner. The first starter is randomized, subsequent nail starters alternate, and local rematches swap the first starter.
+
+In local play, each turn waits at a named handoff card. Lift every finger, then the recipient presses and releases **I’m ready**. The ready tap cannot lock aim. Same-person next-nail turns also require readiness. Pause, backgrounding, and rotation preserve the recipient. Difficulty controls apply only to solo; the operator never takes a competitive local turn. Change modes from match results.
+
+`npm run test:match-browser` exercises two complete local matches through real UI pointer actions, interrupted readiness, pause/background/rotation, same-person readiness, rematch starter swap, and returning to solo. `npm run balance` reproduces the seeded report in `docs/validation/e3/`. See `BALANCE.md` there for scoring formulas and known starter effects. Browser emulation and input proxies do not replace a physical two-person phone playtest.

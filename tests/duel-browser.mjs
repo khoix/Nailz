@@ -14,6 +14,7 @@ try {
  await page.goto('http://127.0.0.1:5175');
  await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));
  await page.screenshot({path:'artifacts/e2/start.png'});
+ await page.clock.setFixedTime(new Date(11));
  await page.locator('#begin').click();
  await page.clock.runFor(850);
  await page.mouse.click(300,600);
@@ -31,10 +32,10 @@ try {
  assert.match(await page.locator('#result-flash').textContent(),/ONE HIT/);
  await page.clock.runFor(580);
  assert.equal(await page.locator('#app').getAttribute('data-phase'),'ROUND_RESULT');
- assert.match(await page.locator('#duel-card h2').textContent(),/Nailed it/);
+ assert.match(await page.locator('#duel-card h2').textContent(),/nailed it/);
  await page.screenshot({path:'artifacts/e2/win.png'});console.log('Perfect finish through normal pointer controls passed.');
  // Reticle timeout, pause, cancelled swipe, weak human hit, AI turn.
- await page.locator('#begin').click();await page.clock.runFor(850);await page.touchscreen.tap(300,600);
+ await page.locator('#begin').click();await page.clock.runFor(3090);await page.touchscreen.tap(300,600);
  await page.clock.runFor(450);await page.touchscreen.tap(300,600);await page.clock.runFor(1400);
  assert.equal(await page.locator('#app').getAttribute('data-phase'),'READY_TO_SWING');
  await page.locator('#pause').click();const before=await page.locator('#app').getAttribute('data-phase');
