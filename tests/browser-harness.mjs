@@ -3,20 +3,9 @@ import { createServer, preview } from 'vite';
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
-/** Capture the composited view and explicitly supply two render frames to the paused clock. */
+/** Keep screenshot failure part of the scenario, including on the CI virtual display. */
 export async function captureScreenshot(page, path) {
- const session=await page.context().newCDPSession(page);
- let timeout;
- try {
-  const capture=Promise.race([
-   session.send('Page.captureScreenshot',{format:'png',fromSurface:false,captureBeyondViewport:false}),
-   new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error(`Screenshot capture timed out: ${path}`)),20000);}),
-  ]);
-  // A frozen WebGL frame can leave Chromium 151 waiting for a compositor frame.
-  // Bound the advance to 32ms; never resume wall time or pump until a test happens to pass.
-  const [image]=await Promise.all([capture,page.clock.runFor(32)]);
-  await writeFile(path,Buffer.from(image.data,'base64'));
- } finally {clearTimeout(timeout);await session.detach().catch(()=>{});}
+ return page.screenshot({path});
 }
 
 /** Same UI scenarios can target Vite development or the actual dist build. */
@@ -29,8 +18,8 @@ export async function runScenario(name, port, scenario) {
  if(!production)await server.listen();
  let browser,context,page,failure,browserVersion;const errors=[];const started=Date.now();
  try {
-  browser=await chromium.launch({channel:process.env.NAILZ_CHROMIUM_PATH?undefined:'chromium',executablePath:process.env.NAILZ_CHROMIUM_PATH||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-  browserVersion=browser.version();console.log(`Browser ${browserVersion}; ${process.env.NAILZ_CHROMIUM_PATH?'custom executable':'Chromium new headless'}`);
+  browser=await chromium.launch({headless:process.env.NAILZ_HEADED!=='1',channel:process.env.NAILZ_CHROMIUM_PATH?undefined:'chromium',executablePath:process.env.NAILZ_CHROMIUM_PATH||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  browserVersion=browser.version();console.log(`Browser ${browserVersion}; ${process.env.NAILZ_CHROMIUM_PATH?'custom executable':'chromium'}; ${process.env.NAILZ_HEADED==='1'?'virtual display':'headless'}`);
   context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:Number(process.env.NAILZ_BROWSER_DPR||1),hasTouch:true});
   // Avoid a continuous screencast competing with explicit WebGL captures while the game clock is paused.
   await context.tracing.start({screenshots:false,snapshots:true,sources:true});page=await context.newPage();page.setDefaultTimeout(20000);
@@ -46,7 +35,7 @@ export async function runScenario(name, port, scenario) {
   if(page) {await captureScreenshot(page,`${artifactDir}/failure.png`).catch(()=>{});await writeFile(`${artifactDir}/failure.html`,await page.content().catch(()=>''));}
   throw error;
  } finally {
-  await writeFile(`${artifactDir}/result.json`,JSON.stringify({name,browserVersion,browserChannel:process.env.NAILZ_CHROMIUM_PATH?'custom executable':'chromium',deviceScaleFactor:Number(process.env.NAILZ_BROWSER_DPR||1),target:production?'production dist':'development',status:failure?'failed':'passed',elapsedMs:Date.now()-started,errors,failure:failure?.stack??null},null,2));
+  await writeFile(`${artifactDir}/result.json`,JSON.stringify({name,browserVersion,headless:process.env.NAILZ_HEADED!=='1',browserChannel:process.env.NAILZ_CHROMIUM_PATH?'custom executable':'chromium',deviceScaleFactor:Number(process.env.NAILZ_BROWSER_DPR||1),target:production?'production dist':'development',status:failure?'failed':'passed',elapsedMs:Date.now()-started,errors,failure:failure?.stack??null},null,2));
   await context?.tracing.stop({path:`${artifactDir}/trace.zip`}).catch(()=>{});
   await browser?.close();
   if(production)await new Promise((resolve,reject)=>server.httpServer.close(error=>error?reject(error):resolve()));else await server.close();
