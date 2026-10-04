@@ -3,9 +3,10 @@ import { createServer, preview } from 'vite';
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
-/** Keep screenshot failure part of the scenario, including on the CI virtual display. */
+/** Keep screenshot failure part of the scenario, including on CPU-only CI runners. */
 export async function captureScreenshot(page, path) {
- return page.screenshot({path});
+ // Software WebGL can queue more GPU work than CI finishes within the action timeout.
+ return page.screenshot({path,timeout:60000});
 }
 
 /** Same UI scenarios can target Vite development or the actual dist build. */
@@ -18,8 +19,8 @@ export async function runScenario(name, port, scenario) {
  if(!production)await server.listen();
  let browser,context,page,failure,browserVersion;const errors=[];const started=Date.now();
  try {
-  browser=await chromium.launch({headless:process.env.NAILZ_HEADED!=='1',channel:process.env.NAILZ_CHROMIUM_PATH?undefined:'chromium',executablePath:process.env.NAILZ_CHROMIUM_PATH||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-  browserVersion=browser.version();console.log(`Browser ${browserVersion}; ${process.env.NAILZ_CHROMIUM_PATH?'custom executable':'chromium'}; ${process.env.NAILZ_HEADED==='1'?'virtual display':'headless'}`);
+  browser=await chromium.launch({channel:process.env.NAILZ_CHROMIUM_PATH?undefined:'chromium',executablePath:process.env.NAILZ_CHROMIUM_PATH||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  browserVersion=browser.version();console.log(`Browser ${browserVersion}; ${process.env.NAILZ_CHROMIUM_PATH?'custom executable':'chromium'}; headless`);
   context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:Number(process.env.NAILZ_BROWSER_DPR||1),hasTouch:true});
   // Avoid a continuous screencast competing with explicit WebGL captures while the game clock is paused.
   await context.tracing.start({screenshots:false,snapshots:true,sources:true});page=await context.newPage();page.setDefaultTimeout(20000);
@@ -35,7 +36,7 @@ export async function runScenario(name, port, scenario) {
   if(page) {await captureScreenshot(page,`${artifactDir}/failure.png`).catch(()=>{});await writeFile(`${artifactDir}/failure.html`,await page.content().catch(()=>''));}
   throw error;
  } finally {
-  await writeFile(`${artifactDir}/result.json`,JSON.stringify({name,browserVersion,headless:process.env.NAILZ_HEADED!=='1',browserChannel:process.env.NAILZ_CHROMIUM_PATH?'custom executable':'chromium',deviceScaleFactor:Number(process.env.NAILZ_BROWSER_DPR||1),target:production?'production dist':'development',status:failure?'failed':'passed',elapsedMs:Date.now()-started,errors,failure:failure?.stack??null},null,2));
+  await writeFile(`${artifactDir}/result.json`,JSON.stringify({name,browserVersion,browserChannel:process.env.NAILZ_CHROMIUM_PATH?'custom executable':'chromium',deviceScaleFactor:Number(process.env.NAILZ_BROWSER_DPR||1),target:production?'production dist':'development',status:failure?'failed':'passed',elapsedMs:Date.now()-started,errors,failure:failure?.stack??null},null,2));
   await context?.tracing.stop({path:`${artifactDir}/trace.zip`}).catch(()=>{});
   await browser?.close();
   if(production)await new Promise((resolve,reject)=>server.httpServer.close(error=>error?reject(error):resolve()));else await server.close();
