@@ -29,10 +29,18 @@
 - `npm run test:duel-browser`: preserved E2 controls coverage with E3 round transitions. Perfect pointer finish, actual touch taps, reticle timeout, cancelled swipe, weak swipe, solo operator return, and rotation.
 - `npm run test:match-browser`: normal UI pointer controls for two full local matches, old-finger readiness blocking, cancelled ready, pause/background/rotation, ready tap consumption, same-person next-nail label, no automatic local strike, rematch swap, score ownership, and mode switch back to solo.
 - `npm run test:browser`: existing E1 fixture regression; unchanged script.
-- Browser screenshots go to ignored `artifacts/e3/`; selected verified evidence is copied to `docs/validation/e3/`. Controlled-clock screenshots are visual/behavior evidence, not frame-rate benchmarks.
+- E3 screenshots were selected into `docs/validation/e3/`. Current individual browser checks write to `artifacts/browser/<scenario>/`; production E2E writes to `artifacts/e2e/<scenario>/`. Controlled-clock screenshots are visual/behavior evidence, not frame-rate benchmarks.
 - Software-rendered Chromium is available in this workspace via `NAILZ_CHROMIUM_PATH=/workspace/scratch/2da0bc65e702/nailz-qa/chromium` and `LD_LIBRARY_PATH=/workspace/scratch/2da0bc65e702/nailz-qa`. Tests start their own loopback Vite server. Standard environments can use Playwright's installed Chromium.
 - **Physical iPhone/Android, Safari, human fun/comfort, and two-person phone passing remain untested.** Automated matches do not establish the human quality gate. Gather physical observations before committing to final art if input feel issues appear.
 - Existing bundle-size warning remains (~558KB JS /142KB gzip); optimization is E8, not grounds for broad premature refactoring.
+
+## Production E2E follow-up requested by user
+- `npm run test:e2e` builds production assets and executes the real UI against Vite preview. The existing development browser scenarios are reused through `tests/browser-harness.mjs`; `tests/solo-matches-browser.mjs` adds complete five-nail solo journeys for all four difficulties, including score ownership, correct winner, and rematch reset.
+- `tests/e2e.mjs` orchestrates the suite and writes a summary. Each scenario records a Playwright trace and JSON result; failure includes a screenshot and page HTML. The harness rejects runtime/console/network/HTTP errors.
+- `.github/workflows/test.yml` runs unit tests and production E2E on push/PR with read-only repository permissions and uploads artifacts. Local execution does not imply that the hosted GitHub Actions job has run.
+- Every later implementation checkpoint must include production E2E; expand the journeys as title/cache/audio/tutorial/settings become available. This follow-up adds testing infrastructure, not E4 art.
+
+- Follow-up result: all six production E2E scenarios passed on Chromium 153 (software rendered, DPR .5), including four complete solo matches and two complete local matches. All 31 unit tests passed. Checked-in report: `docs/validation/e3/production-e2e.json`. Raw traces/screenshots remain in `artifacts/e2e/`; CI uploads equivalent artifacts on future runs.
 
 ## E4 starting point
 Read E4 in `docs/NAILZ-BUILD-PLAN.md`: carnival environment and lighting. Preserve the tested match/input/physics contracts, target-camera stability, readable handoff cards, named identities, and exact shared-nail scoring. Do not begin E4 automatically. The current scene is primitive and should not be represented as the final stunning arcade art.

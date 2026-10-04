@@ -58,3 +58,16 @@ Choose **Solo — vs. Operator** with Easy, Normal, Hard, or Champion, or **2 Pl
 In local play, each turn waits at a named handoff card. Lift every finger, then the recipient presses and releases **I’m ready**. The ready tap cannot lock aim. Same-person next-nail turns also require readiness. Pause, backgrounding, and rotation preserve the recipient. Difficulty controls apply only to solo; the operator never takes a competitive local turn. Change modes from match results.
 
 `npm run test:match-browser` exercises two complete local matches through real UI pointer actions, interrupted readiness, pause/background/rotation, same-person readiness, rematch starter swap, and returning to solo. `npm run balance` reproduces the seeded report in `docs/validation/e3/`. See `BALANCE.md` there for scoring formulas and known starter effects. Browser emulation and input proxies do not replace a physical two-person phone playtest.
+
+## Production end-to-end tests
+
+```sh
+npx playwright install chromium
+npm run test:e2e
+```
+
+This builds `dist` and serves the production bundle with Vite preview. Browser actions complete every solo difficulty, two local matches, rematch/reset, handoffs, and mode switching; the existing controls regression covers timeout, cancellation, pause, and weak/strong swipes. No game-state injection or debug API is used. A controlled clock makes inputs repeatable. Browser exceptions, console errors, failed requests, and HTTP errors fail the run.
+
+Results, screenshots, and Playwright traces are saved under `artifacts/e2e/`; failures also save the page HTML. Open a trace with `npx playwright show-trace artifacts/e2e/<scenario>/trace.zip`. `.github/workflows/test.yml` runs unit tests and production E2E on pushes and pull requests, retaining artifacts for seven days. The individual `test:duel-browser` and `test:match-browser` commands still use the development server for fast diagnosis.
+
+`NAILZ_CHROMIUM_PATH` selects an installed browser. Optional `NAILZ_BROWSER_DPR` changes rendering pixel density (default 1) without changing the 390×844 CSS-pixel phone viewport or input rules. Test outcomes are browser automation results, not physical phone certification.

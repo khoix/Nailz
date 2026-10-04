@@ -1,19 +1,10 @@
-import { chromium } from 'playwright';
-import { createServer } from 'vite';
-import { mkdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const server=await createServer({server:{host:'127.0.0.1',port:5175,strictPort:true}});await server.listen();
-await mkdir('artifacts/e2',{recursive:true});
-let browser;
-try {
- browser=await chromium.launch({executablePath:process.env.NAILZ_CHROMIUM_PATH||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,hasTouch:true});
- page.setDefaultTimeout(20000);
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
+import { runScenario } from './browser-harness.mjs';
+await runScenario('solo-controls',5175,async ({page,errors,artifactDir,url})=>{
  await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});
- await page.goto('http://127.0.0.1:5175');
+ await page.goto(url);
  await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));
- await page.screenshot({path:'artifacts/e2/start.png'});
+ await page.screenshot({path:`${artifactDir}/start.png`});
  await page.clock.setFixedTime(new Date(11));
  await page.locator('#begin').click();
  await page.clock.runFor(850);
@@ -24,16 +15,16 @@ try {
  await page.clock.runFor(695);await page.mouse.click(300,600);
  await page.clock.runFor(400);
  assert.match(await page.locator('#instruction').textContent(),/SWIPE DOWN/);
- await page.screenshot({path:'artifacts/e2/swing-ready.png'});
+ await page.screenshot({path:`${artifactDir}/swing-ready.png`});
  await page.mouse.move(195,400);await page.mouse.down();
  await page.clock.runFor(120);await page.mouse.move(195,740,{steps:8});await page.mouse.up();
  await page.clock.runFor(390);
- await page.screenshot({path:'artifacts/e2/perfect-impact.png'});
+ await page.screenshot({path:`${artifactDir}/perfect-impact.png`});
  assert.match(await page.locator('#result-flash').textContent(),/ONE HIT/);
  await page.clock.runFor(580);
  assert.equal(await page.locator('#app').getAttribute('data-phase'),'ROUND_RESULT');
  assert.match(await page.locator('#duel-card h2').textContent(),/nailed it/);
- await page.screenshot({path:'artifacts/e2/win.png'});console.log('Perfect finish through normal pointer controls passed.');
+ await page.screenshot({path:`${artifactDir}/win.png`});console.log('Perfect finish through normal pointer controls passed.');
  // Reticle timeout, pause, cancelled swipe, weak human hit, AI turn.
  await page.locator('#begin').click();await page.clock.runFor(3090);await page.touchscreen.tap(300,600);
  await page.clock.runFor(450);await page.touchscreen.tap(300,600);await page.clock.runFor(1400);
@@ -48,15 +39,15 @@ try {
  await page.clock.runFor(100);assert.equal(await page.locator('#app').getAttribute('data-phase'),'READY_TO_SWING');
  await page.mouse.move(195,400);await page.mouse.down();await page.clock.runFor(600);await page.mouse.move(195,480);await page.mouse.up();
  await page.clock.runFor(1100);assert.equal(await page.locator('#app').getAttribute('data-actor'),'p2');
- await page.screenshot({path:'artifacts/e2/operator-aim.png'});
- await page.clock.runFor(1100);await page.screenshot({path:'artifacts/e2/operator-impact.png'});
+ await page.screenshot({path:`${artifactDir}/operator-aim.png`});
+ await page.clock.runFor(1100);await page.screenshot({path:`${artifactDir}/operator-impact.png`});
  await page.clock.runFor(1600);
  assert.equal(await page.locator('#app').getAttribute('data-actor'),'p1');
- await page.screenshot({path:'artifacts/e2/target.png'});
+ await page.screenshot({path:`${artifactDir}/target.png`});
  await page.setViewportSize({width:844,height:390});await page.clock.runFor(50);
  assert.equal(await page.locator('#pause-card').isVisible(),true);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
- await page.screenshot({path:'artifacts/e2/landscape-paused.png'});
+ await page.screenshot({path:`${artifactDir}/landscape-paused.png`});
  assert.deepEqual(errors,[]);
  console.log(JSON.stringify({status:'passed',perfectFinish:true,timeout:true,pause:true,cancel:true,operatorAlternation:true,errors}));
-} finally {await browser?.close();await server.close();}
+});
