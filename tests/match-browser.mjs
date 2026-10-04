@@ -31,15 +31,17 @@ await runScenario('local-matches',5176,async ({page,errors,artifactDir,url})=>{
  await strike(true);assert.equal(await phase(),'TURN_HANDOFF');assert.equal(await actor(),'p2');assert.match(await page.locator('#handoff-title').textContent(),/Pass to Player 2/);
  await page.clock.runFor(5000);assert.equal(await phase(),'TURN_HANDOFF');
  await strike();assert.equal(await phase(),'ROUND_RESULT');assert.match(await page.locator('#duel-card h2').textContent(),/Player 2/);
+ console.log(`${new Date().toISOString()} local-matches: first match nail 1/5 complete`);
  await page.locator('#begin').click();await page.clock.runFor(450);assert.match(await page.locator('#handoff-title').textContent(),/Player 2 — Next nail/);
  for(let round=2;round<=5;round++) {
   assert.equal(await actor(),round%2===0?'p2':'p1');await strike();assert.equal(await phase(),'ROUND_RESULT');await page.locator('#begin').click();await page.clock.runFor(450);
+  console.log(`${new Date().toISOString()} local-matches: first match nail ${round}/5 complete`);
  }
  assert.equal(await phase(),'MATCH_RESULT');assert.match(await page.locator('#duel-card h2').textContent(),/Player 2 wins/);assert.match(await page.locator('#match-score').textContent(),/2 — 3/);
  await captureScreenshot(page,`${artifactDir}/match-result.png`);
  await page.locator('#begin').click();await page.clock.runFor(450);assert.equal(await actor(),'p2');assert.equal(await phase(),'TURN_HANDOFF');assert.match(await page.locator('#match-score').textContent(),/0 — 0/);
  // Finish the rematch to exercise mode changes only at match boundaries.
- for(let round=1;round<=5;round++){await strike();await page.locator('#begin').click();await page.clock.runFor(450);}
+ for(let round=1;round<=5;round++){await strike();await page.locator('#begin').click();await page.clock.runFor(450);console.log(`${new Date().toISOString()} local-matches: rematch nail ${round}/5 complete`);}
  await page.locator('#choose-mode').click();assert.equal(await phase(),'MATCH_INTRO');await page.selectOption('#mode','solo');assert.equal(await page.locator('#difficulty').isVisible(),true);
  await page.selectOption('#difficulty','champion');await page.locator('#begin').click();await page.clock.runFor(450);assert.notEqual(await phase(),'TURN_HANDOFF');assert.match(await page.locator('#match-score').textContent(),/Player.*0 — 0.*Operator/);
  assert.deepEqual(errors,[]);console.log(JSON.stringify({status:'passed',localMatches:2,allFiveNails:true,freshTouch:true,cancel:true,pause:true,background:true,rotation:true,samePersonReady:true,rematchSwap:true,modeChange:true,errors}));

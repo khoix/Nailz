@@ -5,7 +5,7 @@ on:
 permissions:
   contents: read
 jobs:
-  test:
+  checks:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -15,15 +15,42 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
       - run: npm test
+      - run: npm run build
+  e2e:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [asset-loading, solo-controls, local-matches, solo-easy, solo-normal, solo-hard, solo-champion]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
       - name: Production E2E with software WebGL
-        run: npm run test:e2e
+        run: npm run test:e2e -- ${{ matrix.scenario }}
         env:
           NAILZ_BROWSER_DPR: '0.5'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: production-e2e-results
+          name: production-e2e-${{ matrix.scenario }}
           path: artifacts/e2e/
           retention-days: 7
+  test:
+    if: ${{ always() }}
+    needs: [checks, e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require unit, build, and every E2E scenario
+        env:
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+        run: test "$CHECKS_RESULT" = success && test "$E2E_RESULT" = success

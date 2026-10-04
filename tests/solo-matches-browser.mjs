@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { runScenario, captureScreenshot } from './browser-harness.mjs';
 
-for(const difficulty of ['easy','normal','hard','champion']) {
+const difficulties=['easy','normal','hard','champion'];
+const requested=process.argv.slice(2);
+assert.ok(requested.length<=1&&requested.every(difficulty=>difficulties.includes(difficulty)),'Expected one of: easy, normal, hard, champion');
+for(const difficulty of requested.length?requested:difficulties) {
  await runScenario(`solo-${difficulty}`,5177,async({page,artifactDir,url})=>{
   await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));await page.goto(url);await page.locator('#begin').waitFor();
   // Fix the clock/seed, not the game state. All actions use the visible UI.
@@ -35,6 +38,7 @@ for(const difficulty of ['easy','normal','hard','champion']) {
    }
    const title=await page.locator('#duel-card h2').textContent();const winner=title.startsWith('Operator')?'Operator':'Player';wins[winner]++;
    assert.match(await page.locator('#match-score').textContent(),new RegExp(`Player\\s+${wins.Player} — ${wins.Operator}\\s+Operator`));
+   console.log(`${new Date().toISOString()} solo-${difficulty}: nail ${round}/5 complete`);
    await page.locator('#begin').click();
   }
   assert.equal(await phase(),'MATCH_RESULT');assert.equal(wins.Player+wins.Operator,5);
