@@ -1,0 +1,36 @@
+:root { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: #fff1d9; background: #111222; color-scheme: dark; font-synthesis: none; }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; }
+body { overflow: hidden; overscroll-behavior: none; }
+button, select { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, select:focus-visible { outline: 2px solid #ffda8a; outline-offset: 3px; }
+#app { position: relative; height: 100svh; min-height: 380px; overflow: hidden; }
+#scene { display: block; width: 100%; height: 100%; touch-action: none; }
+.masthead { position: absolute; top: max(30px, env(safe-area-inset-top)); left: 6%; pointer-events: none; }
+.eyebrow { font-size: 9px; letter-spacing: 0.22em; color: #c4ad9b; font-weight: 700; }
+h1 { font-size: clamp(48px, 10vw, 104px); line-height: 0.95; font-weight: 950; letter-spacing: -0.08em; margin: 12px 0; transform: skew(-7deg); text-shadow: 3px 4px 0 #713344; }
+h1 span { color: #ff7770; }
+.edition { font-size: 9px; letter-spacing: 0.2em; color: #baabb1; }
+.scene-caption { position: absolute; bottom: max(30px, env(safe-area-inset-bottom)); left: 6%; display: flex; gap: 12px; align-items: center; }
+.scene-caption strong { font-size: 14px; }.scene-caption p { margin: 5px 0 0; font-size: 11px; color: #b6acbd; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #f3b65d; box-shadow: 0 0 14px #f3b65d; }
+#notice { position: absolute; left: 10%; right: 10%; top: 46%; text-align: center; font-size: 15px; background: #111222; }
+#notice:empty { display: none; }
+.inspector { position: absolute; width: 320px; right: 25px; bottom: 25px; padding: 18px; border: 1px solid #ffffff20; border-radius: 16px; background: #191a2cef; box-shadow: 0 16px 40px #0005; }
+.panel-heading { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 0.13em; font-weight: 800; }
+.tag { color: #e8b471; font-size: 8px; padding: 3px 5px; border: 1px solid #e8b47144; border-radius: 4px; }
+.views, .actions { display: flex; gap: 6px; margin-top: 12px; }
+.inspector button { min-height: 36px; border: 1px solid #ffffff20; border-radius: 6px; background: #ffffff08; color: #ddd8e7; padding: 7px 10px; font-size: 11px; }
+.views button { flex: 1; }
+.inspector button:hover { background: #ffffff18; }
+.inspector .primary { background: #ffc47b; color: #251c21; border-color: #ffc47b; font-weight: 700; }
+.inspector label { display: block; font-size: 10px; color: #b0a8be; margin: 14px 0 7px; }
+.inspector select { width: 100%; padding: 8px; background: #111222; color: #eee5df; border: 1px solid #ffffff25; border-radius: 6px; font-size: 12px; }
+.inspector output { display: block; font-size: 10px; line-height: 1.6; color: #ccc0d4; margin-top: 12px; min-height: 16px; }
+@media (max-width: 600px) {
+  .masthead { top: max(25px, env(safe-area-inset-top)); }
+  .inspector { left: 5%; right: 5%; bottom: max(18px, env(safe-area-inset-bottom)); width: auto; padding: 14px; }
+  #app:has(.inspector) .scene-caption { display: none; }
+}
+@media (max-height: 540px) and (min-width: 601px) { .masthead h1 { font-size: 48px; }.inspector { bottom: 12px; padding: 12px; }.scene-caption { bottom: 12px; } }
