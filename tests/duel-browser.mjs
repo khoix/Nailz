@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { runScenario } from './browser-harness.mjs';
+import { runScenario, captureScreenshot } from './browser-harness.mjs';
 await runScenario('solo-controls',5175,async ({page,errors,artifactDir,url})=>{
  await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});
  await page.goto(url);
  await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));
- await page.screenshot({path:`${artifactDir}/start.png`});
+ await captureScreenshot(page,`${artifactDir}/start.png`);
  await page.clock.setFixedTime(new Date(11));
  await page.locator('#begin').click();
  await page.clock.runFor(850);
@@ -15,16 +15,16 @@ await runScenario('solo-controls',5175,async ({page,errors,artifactDir,url})=>{
  await page.clock.runFor(695);await page.mouse.click(300,600);
  await page.clock.runFor(400);
  assert.match(await page.locator('#instruction').textContent(),/SWIPE DOWN/);
- await page.screenshot({path:`${artifactDir}/swing-ready.png`});
+ await captureScreenshot(page,`${artifactDir}/swing-ready.png`);
  await page.mouse.move(195,400);await page.mouse.down();
  await page.clock.runFor(120);await page.mouse.move(195,740,{steps:8});await page.mouse.up();
  await page.clock.runFor(390);
- await page.screenshot({path:`${artifactDir}/perfect-impact.png`});
+ await captureScreenshot(page,`${artifactDir}/perfect-impact.png`);
  assert.match(await page.locator('#result-flash').textContent(),/ONE HIT/);
  await page.clock.runFor(580);
  assert.equal(await page.locator('#app').getAttribute('data-phase'),'ROUND_RESULT');
  assert.match(await page.locator('#duel-card h2').textContent(),/nailed it/);
- await page.screenshot({path:`${artifactDir}/win.png`});console.log('Perfect finish through normal pointer controls passed.');
+ await captureScreenshot(page,`${artifactDir}/win.png`);console.log('Perfect finish through normal pointer controls passed.');
  // Reticle timeout, pause, cancelled swipe, weak human hit, AI turn.
  await page.locator('#begin').click();await page.clock.runFor(3090);await page.touchscreen.tap(300,600);
  await page.clock.runFor(450);await page.touchscreen.tap(300,600);await page.clock.runFor(1400);
@@ -39,15 +39,15 @@ await runScenario('solo-controls',5175,async ({page,errors,artifactDir,url})=>{
  await page.clock.runFor(100);assert.equal(await page.locator('#app').getAttribute('data-phase'),'READY_TO_SWING');
  await page.mouse.move(195,400);await page.mouse.down();await page.clock.runFor(600);await page.mouse.move(195,480);await page.mouse.up();
  await page.clock.runFor(1100);assert.equal(await page.locator('#app').getAttribute('data-actor'),'p2');
- await page.screenshot({path:`${artifactDir}/operator-aim.png`});
- await page.clock.runFor(1100);await page.screenshot({path:`${artifactDir}/operator-impact.png`});
+ await captureScreenshot(page,`${artifactDir}/operator-aim.png`);
+ await page.clock.runFor(1100);await captureScreenshot(page,`${artifactDir}/operator-impact.png`);
  await page.clock.runFor(1600);
  assert.equal(await page.locator('#app').getAttribute('data-actor'),'p1');
- await page.screenshot({path:`${artifactDir}/target.png`});
+ await captureScreenshot(page,`${artifactDir}/target.png`);
  await page.setViewportSize({width:844,height:390});await page.clock.runFor(50);
  assert.equal(await page.locator('#pause-card').isVisible(),true);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
- await page.screenshot({path:`${artifactDir}/landscape-paused.png`});
+ await captureScreenshot(page,`${artifactDir}/landscape-paused.png`);
  assert.deepEqual(errors,[]);
  console.log(JSON.stringify({status:'passed',perfectFinish:true,timeout:true,pause:true,cancel:true,operatorAlternation:true,errors}));
 });

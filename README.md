@@ -73,3 +73,5 @@ Results, screenshots, and Playwright traces are saved under `artifacts/e2e/`; fa
 `NAILZ_CHROMIUM_PATH` selects an installed browser. Optional `NAILZ_BROWSER_DPR` changes rendering pixel density (default 1) without changing the 390×844 CSS-pixel phone viewport or input rules. Test outcomes are browser automation results, not physical phone certification.
 
 Browser E2E uses Chromium’s full new-headless channel rather than the separate headless-shell binary. Traces retain DOM snapshots, actions, and sources; continuous trace screencasting is disabled to avoid competing with explicit WebGL screenshots while the controlled game clock is paused. Scenario screenshots and failure screenshots remain enabled. Result JSON records the actual browser version, channel, and pixel density.
+
+Explicit screenshots use Chromium’s DevTools `Page.captureScreenshot` with `fromSurface: false` to capture the browser view without requesting a new off-screen surface under the paused clock. Capture still has a 20-second limit and fails the scenario on error; gameplay time is never resumed just to obtain an image.

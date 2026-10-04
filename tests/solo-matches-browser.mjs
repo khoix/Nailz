@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { runScenario } from './browser-harness.mjs';
+import { runScenario, captureScreenshot } from './browser-harness.mjs';
 
 for(const difficulty of ['easy','normal','hard','champion']) {
  await runScenario(`solo-${difficulty}`,5177,async({page,artifactDir,url})=>{
@@ -39,7 +39,7 @@ for(const difficulty of ['easy','normal','hard','champion']) {
   }
   assert.equal(await phase(),'MATCH_RESULT');assert.equal(wins.Player+wins.Operator,5);
   assert.match(await page.locator('#duel-card h2').textContent(),new RegExp(`^${wins.Player>wins.Operator?'Player':'Operator'} wins!`));
-  assert.ok(humanStrikes>0);assert.ok(operatorTurns>0);await page.screenshot({path:`${artifactDir}/results.png`});
+  assert.ok(humanStrikes>0);assert.ok(operatorTurns>0);await captureScreenshot(page,`${artifactDir}/results.png`);
   await page.locator('#begin').click();assert.match(await page.locator('#strike-count').textContent(),/NAIL 1\/5/);assert.match(await page.locator('#match-score').textContent(),/0 — 0.*0 \/ 0 pts/);
   console.log(JSON.stringify({difficulty,rounds:5,wins,humanStrikes,operatorTurns,rematchReset:true}));
  });

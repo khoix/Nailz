@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { runScenario } from './browser-harness.mjs';
+import { runScenario, captureScreenshot } from './browser-harness.mjs';
 await runScenario('local-matches',5176,async ({page,errors,artifactDir,url})=>{
  await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});await page.goto(url);await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));
  await page.clock.setFixedTime(new Date(11));await page.selectOption('#mode','pass-and-play');assert.equal(await page.locator('#difficulty').isVisible(),false);
@@ -20,7 +20,7 @@ await runScenario('local-matches',5176,async ({page,errors,artifactDir,url})=>{
  await page.setViewportSize({width:844,height:390});await page.clock.runFor(100);await page.locator('#pause-card').waitFor({state:'visible'});
  await page.setViewportSize({width:390,height:844});await page.locator('#resume').click();await page.clock.runFor(850);
  assert.equal(await actor(),'p1');assert.equal(await phase(),'TURN_HANDOFF');
- await page.screenshot({path:`${artifactDir}/handoff.png`});
+ await captureScreenshot(page,`${artifactDir}/handoff.png`);
  async function strike(weak=false) {
   await page.locator('#ready').click();assert.equal(await phase(),'NAIL_SETUP');
   await page.clock.runFor(850);assert.equal(await phase(),'TARGET_Y');
@@ -36,7 +36,7 @@ await runScenario('local-matches',5176,async ({page,errors,artifactDir,url})=>{
   assert.equal(await actor(),round%2===0?'p2':'p1');await strike();assert.equal(await phase(),'ROUND_RESULT');await page.locator('#begin').click();await page.clock.runFor(450);
  }
  assert.equal(await phase(),'MATCH_RESULT');assert.match(await page.locator('#duel-card h2').textContent(),/Player 2 wins/);assert.match(await page.locator('#match-score').textContent(),/2 — 3/);
- await page.screenshot({path:`${artifactDir}/match-result.png`});
+ await captureScreenshot(page,`${artifactDir}/match-result.png`);
  await page.locator('#begin').click();await page.clock.runFor(450);assert.equal(await actor(),'p2');assert.equal(await phase(),'TURN_HANDOFF');assert.match(await page.locator('#match-score').textContent(),/0 — 0/);
  // Finish the rematch to exercise mode changes only at match boundaries.
  for(let round=1;round<=5;round++){await strike();await page.locator('#begin').click();await page.clock.runFor(450);}

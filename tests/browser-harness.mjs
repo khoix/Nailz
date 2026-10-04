@@ -3,6 +3,19 @@ import { createServer, preview } from 'vite';
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
+/** Capture the composited browser view without requesting a new off-screen GPU surface. */
+export async function captureScreenshot(page, path) {
+ const session=await page.context().newCDPSession(page);
+ let timeout;
+ try {
+  const image=await Promise.race([
+   session.send('Page.captureScreenshot',{format:'png',fromSurface:false,captureBeyondViewport:false}),
+   new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error(`Screenshot capture timed out: ${path}`)),20000);}),
+  ]);
+  await writeFile(path,Buffer.from(image.data,'base64'));
+ } finally {clearTimeout(timeout);await session.detach().catch(()=>{});}
+}
+
 /** Same UI scenarios can target Vite development or the actual dist build. */
 export async function runScenario(name, port, scenario) {
  const production=process.env.NAILZ_E2E==='1';
@@ -27,7 +40,7 @@ export async function runScenario(name, port, scenario) {
   console.log(`PASS ${name} (${production?'production':'development'})`);
  } catch(error) {
   failure=error;
-  if(page) {await page.screenshot({path:`${artifactDir}/failure.png`}).catch(()=>{});await writeFile(`${artifactDir}/failure.html`,await page.content().catch(()=>''));}
+  if(page) {await captureScreenshot(page,`${artifactDir}/failure.png`).catch(()=>{});await writeFile(`${artifactDir}/failure.html`,await page.content().catch(()=>''));}
   throw error;
  } finally {
   await writeFile(`${artifactDir}/result.json`,JSON.stringify({name,browserVersion,browserChannel:process.env.NAILZ_CHROMIUM_PATH?'custom executable':'chromium',deviceScaleFactor:Number(process.env.NAILZ_BROWSER_DPR||1),target:production?'production dist':'development',status:failure?'failed':'passed',elapsedMs:Date.now()-started,errors,failure:failure?.stack??null},null,2));
