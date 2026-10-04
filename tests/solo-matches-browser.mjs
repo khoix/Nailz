@@ -3,7 +3,7 @@ import { runScenario, captureScreenshot } from './browser-harness.mjs';
 
 for(const difficulty of ['easy','normal','hard','champion']) {
  await runScenario(`solo-${difficulty}`,5177,async({page,artifactDir,url})=>{
-  await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});await page.goto(url);await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));
+  await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));await page.goto(url);await page.locator('#begin').waitFor();
   // Fix the clock/seed, not the game state. All actions use the visible UI.
   await page.clock.setFixedTime(new Date(11));await page.selectOption('#difficulty',difficulty);await page.locator('#begin').click();
   const phase=()=>page.locator('#app').getAttribute('data-phase');

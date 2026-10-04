@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
-const scripts=['tests/duel-browser.mjs','tests/match-browser.mjs','tests/solo-matches-browser.mjs'];
+const scripts=['tests/loading-browser.mjs','tests/duel-browser.mjs','tests/match-browser.mjs','tests/solo-matches-browser.mjs'];
 const results=[];await mkdir('artifacts/e2e',{recursive:true});
 for(const script of scripts) {
  const start=Date.now();

@@ -1,0 +1,47 @@
+{
+  "checkpoint": "E4",
+  "status": "incomplete",
+  "reason": "20-minute execution budget; four solo-difficulty journeys not yet completed at save cutoff",
+  "passed": [
+    {
+      "name": "asset-loading",
+      "browserVersion": "153.0.8010.0",
+      "browserChannel": "custom executable",
+      "deviceScaleFactor": 0.5,
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 18509,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-controls",
+      "browserVersion": "153.0.8010.0",
+      "browserChannel": "custom executable",
+      "deviceScaleFactor": 0.5,
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 69294,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "local-matches",
+      "browserVersion": "153.0.8010.0",
+      "browserChannel": "custom executable",
+      "deviceScaleFactor": 0.5,
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 253500,
+      "errors": [],
+      "failure": null
+    }
+  ],
+  "pending": [
+    "solo-easy",
+    "solo-normal",
+    "solo-hard",
+    "solo-champion"
+  ],
+  "latestAdjustments": "HUD contrast and pre-navigation clock pause verified by targeted development startup/aim capture; complete production rerun required"
+}

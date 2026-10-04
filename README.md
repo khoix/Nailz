@@ -1,6 +1,6 @@
 # Nailz!
 
-A mobile-first precision hammering arcade game. **Current milestone: E3 complete five-nail matches** — solo versus four operator difficulties, or two-player pass-and-play on one phone. Timing controls, animated contact, scoring, rematches, and protected handoffs are playable. Art and menus are still temporary.
+A mobile-first precision hammering arcade game. **Current milestone: E4 carnival environment and asset preparation** — solo versus four operator difficulties, or two-player pass-and-play on one phone. Timing controls, animated contact, scoring, rematches, and protected handoffs are playable. The booth, hero props, lighting, and asset cache are implemented; the operator character, effects, and final title/menus remain later milestones.
 
 ## Run
 
@@ -34,11 +34,11 @@ Development mode at `/?lab` shows **Strike Lab**: choose a fixture, resolve agai
 
 Nail-local +X means right; +Y means up in the fixed top-down view, mapping to world -Z. Nail depth is insertion in world units; temporary bend is a direction vector whose magnitude is radians. Rendering never resolves a strike or modifies scores.
 
-Music will be supplied by the user later. `MUSIC` remains null; no generated or substitute music is included. Preloading/cache and Tap to Play contracts exist, but their implementations remain assigned to E4/E6/E7.
+Music will be supplied by the user later. `MUSIC` remains null; no generated or substitute music is included. Versioned preloading, cache fallback, retry, and render preparation are implemented. Gesture audio and the final Tap to Play presentation remain E6/E7.
 
 ## Continue
 
-Read `docs/AI-NAILZ-HANDOFF.md`, then the relevant execution in `docs/NAILZ-BUILD-PLAN.md`. Preserve the same branch. The plan contains the complete scope, visual direction, and acceptance criteria. Match orchestration, four AI input presets, and pass-and-play are implemented. E4 is the carnival environment and lighting pass; do not start it without a new execution request.
+Read `docs/AI-NAILZ-HANDOFF.md`, then the relevant execution in `docs/NAILZ-BUILD-PLAN.md`. Preserve the same branch. The plan contains the complete scope, visual direction, and acceptance criteria. Match orchestration, four AI input presets, and pass-and-play are implemented. E5 is the operator/animation milestone; do not start it without a new execution request.
 
 ## Browser smoke check
 
@@ -73,3 +73,9 @@ Results, screenshots, and Playwright traces are saved under `artifacts/e2e/`; fa
 `NAILZ_CHROMIUM_PATH` selects an installed browser. Optional `NAILZ_BROWSER_DPR` changes rendering pixel density (default 1) without changing the 390×844 CSS-pixel phone viewport or input rules. Test outcomes are browser automation results, not physical phone certification.
 
 GitHub Actions uses full headless Chromium with software WebGL at DPR 0.5; the phone viewport and all input coordinates remain 390×844 CSS pixels. This reduces rendering cost on CPU-only runners without changing gameplay. Screenshots get a separate 60-second readback timeout; UI action/assertion limits remain 20 seconds. No screenshot failures are ignored, and screenshot capture never advances the controlled clock. Traces retain DOM snapshots, actions, and sources without continuous video capture. Results record browser version/channel and pixel density.
+
+## Environment and loading
+
+See `docs/ASSET-MANIFEST.md` for asset provenance, cache/version rules, rendering settings, and disposal ownership. `?quality=low` selects the basic low tier; the default high tier caps DPR at 1.75. `npm run test:environment` captures booth, target, and impact views at portrait and landscape sizes and profiles CPU render submission in the development inspector.
+
+Production E2E also verifies cold/warm cache loading, old-cache retirement, corrupted-cache refetch, failed-image retry, and denied-storage fallback. Node tests cover HTTP failures, version changes, optional failures, and aborts.

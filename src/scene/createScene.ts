@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { buildEnvironment } from './environment.ts';
 import type { NailState, StrikeResult } from '../game/types.ts';
 import { createNail } from '../game/strike.ts';
 import { DUEL_TIMING, type DuelSnapshot } from '../game/duel.ts';
@@ -11,16 +14,22 @@ const WORLD_UP = new THREE.Vector3(0, 1, 0);
 export function nailLocalToWorld(x: number, y: number, height: number): THREE.Vector3 {
   return new THREE.Vector3(x * NAIL_HEAD_RADIUS, height, -y * NAIL_HEAD_RADIUS);
 }
-export function createScene(canvas: HTMLCanvasElement) {
+export function createScene(canvas: HTMLCanvasElement, textures = new Map<string, THREE.Texture>()) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = .95;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#111222');
-  scene.fog = new THREE.Fog('#111222', 7, 19);
+  scene.background = new THREE.Color('#101629');
+  scene.fog = new THREE.Fog('#101629', 10, 23);
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const room = new RoomEnvironment(); const environmentMap = pmrem.fromScene(room, .06);
+  scene.environment = environmentMap.texture; scene.environmentIntensity = .45;
+  room.dispose(); pmrem.dispose();
+  const environment = buildEnvironment(scene, textures);
+  let quality: 'low' | 'high' = new URLSearchParams(location.search).get('quality') === 'low' ? 'low' : 'high';
   const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 40);
   const materials: THREE.Material[] = [];
   const geometries: THREE.BufferGeometry[] = [];
@@ -28,42 +37,50 @@ export function createScene(canvas: HTMLCanvasElement) {
     const m = new THREE.MeshStandardMaterial({ color, roughness, metalness }); materials.push(m); return m;
   };
   const wood = mat('#9a582d');
-  const endGrain = mat('#bb824b');
+  const endGrain = mat('#fff0d4', .86); endGrain.map = textures.get('endgrain') ?? null;
   const darkWood = mat('#653620');
-  const metal = mat('#b5c2d1', 0.26, 0.8);
+  const metal = mat('#c4d3df', 0.28, 0.82);
+  const brass = mat('#b68b51', .3, .72);
   const grip = mat('#a73343', 0.82);
   const plinth = mat('#25283d', 0.4, 0.2);
   const makeMesh = (geometry: THREE.BufferGeometry, material: THREE.Material, parent: THREE.Object3D = scene) => {
     geometries.push(geometry);
     const mesh = new THREE.Mesh(geometry, material); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); return mesh;
   };
-  scene.add(new THREE.HemisphereLight('#adc8fc', '#482329', 2));
-  const key = new THREE.DirectionalLight('#ffe0a3', 4.5); key.position.set(-3, 6, 4); key.castShadow = true;
+  scene.add(new THREE.HemisphereLight('#adc8fc', '#30203e', 1.1));
+  const key = new THREE.DirectionalLight('#ffda9d', 3.2); key.position.set(-3, 6, 4); key.castShadow = true;
   key.shadow.mapSize.set(1024, 1024); key.shadow.camera.left = -4; key.shadow.camera.right = 4;
   key.shadow.camera.top = 4; key.shadow.camera.bottom = -4; key.shadow.normalBias = 0.025; scene.add(key);
-  const rim = new THREE.DirectionalLight('#78aaff', 3); rim.position.set(3, 3, -4); scene.add(rim);
+  const rim = new THREE.DirectionalLight('#75c7e3', 2.2); rim.position.set(3, 3, -4); scene.add(rim);
   const base = makeMesh(new THREE.CylinderGeometry(1.8, 1.94, 0.18, 64), plinth); base.position.y = -0.09;
-  const block = makeMesh(new THREE.CylinderGeometry(1.24, 1.31, BLOCK_TOP, 48), wood); block.position.y = BLOCK_TOP / 2;
-  const top = makeMesh(new THREE.CylinderGeometry(1.225, 1.225, 0.016, 64), endGrain); top.position.y = BLOCK_TOP - 0.004;
-  for (let i = 1; i <= 7; i++) {
-    const ring = makeMesh(new THREE.TorusGeometry(i * 0.151, 0.003, 3, 96), darkWood);
-    ring.rotation.x = Math.PI / 2; ring.position.set(0.026, BLOCK_TOP + 0.005, -0.015); ring.scale.y = 0.93;
+  const logProfile = [[1.23,0],[1.29,.04],[1.31,.1],[1.28,.56],[1.24,.67],[1.20,.7]].map(([r,y])=>new THREE.Vector2(r,y));
+  makeMesh(new THREE.LatheGeometry(logProfile,64),wood);
+  // Small repeated surface details share draw calls and do not cast tiny costly shadows.
+  function instances(geometry:THREE.BufferGeometry,material:THREE.Material,count:number,parent:THREE.Object3D,pose:(o:THREE.Object3D,i:number)=>void){
+    geometries.push(geometry);const mesh=new THREE.InstancedMesh(geometry,material,count);mesh.receiveShadow=true;parent.add(mesh);
+    const o=new THREE.Object3D();for(let i=0;i<count;i++){pose(o,i);o.updateMatrix();mesh.setMatrixAt(i,o.matrix);}return mesh;
   }
-  const band = makeMesh(new THREE.CylinderGeometry(1.294, 1.294, 0.055, 48, 1, true), plinth); band.position.y = 0.15;
-  const floor = makeMesh(new THREE.PlaneGeometry(80, 80), mat('#171725', 0.92)); floor.rotation.x = -Math.PI / 2; floor.position.y = -0.19;
+  instances(new THREE.CylinderGeometry(.006,.014,.52,5),darkWood,40,scene,(ridge,i)=>{const a=i*Math.PI*2/40;ridge.position.set(Math.cos(a)*1.29,.3,Math.sin(a)*1.29);ridge.rotation.z=Math.sin(i)*.035;});
+  const top = makeMesh(new THREE.CylinderGeometry(1.225, 1.225, 0.016, 64), endGrain); top.position.y = BLOCK_TOP - 0.004;
+  for(const y of [.13,.49]) {const band = makeMesh(new THREE.CylinderGeometry(1.309, 1.309, .047, 64, 1, true), plinth); band.position.y=y;}
+  instances(new THREE.SphereGeometry(.023,8,6),brass,12,scene,(rivet,i)=>{const a=i*Math.PI/6;rivet.position.set(Math.cos(a)*1.32,.13,Math.sin(a)*1.32);});
+  const floor = makeMesh(new THREE.PlaneGeometry(80, 80), mat('#171725', 0.92)); floor.rotation.x = -Math.PI / 2; floor.position.y = -1.36;
   const nailGroup = new THREE.Group(); scene.add(nailGroup);
   const shaftGeometry = new THREE.CylinderGeometry(0.027, 0.027, 1, 12); geometries.push(shaftGeometry);
   const shaft: THREE.Mesh[] = [];
   for (let i = 0; i < 12; i++) { const part = new THREE.Mesh(shaftGeometry, metal); part.castShadow = true; nailGroup.add(part); shaft.push(part); }
-  const head = makeMesh(new THREE.CylinderGeometry(NAIL_HEAD_RADIUS, NAIL_HEAD_RADIUS, 0.042, 32), metal, nailGroup);
+  const headProfile=[[0,-.021],[.098,-.021],[NAIL_HEAD_RADIUS,-.009],[NAIL_HEAD_RADIUS,.007],[.097,.021],[0,.021]].map(([r,y])=>new THREE.Vector2(r,y));
+  const head = makeMesh(new THREE.LatheGeometry(headProfile,48), metal, nailGroup);
   const hammer = new THREE.Group(); scene.add(hammer);
-  const hammerHead = makeMesh(new THREE.BoxGeometry(0.42, 0.15, 0.19), metal, hammer);
+  const hammerHead = makeMesh(new RoundedBoxGeometry(0.42, 0.15, 0.19, 3, .035), metal, hammer);
   hammerHead.position.y = 0;
   // Only this raised circular striking face contacts the nail: radius .65 heads.
   const strikingFace = makeMesh(new THREE.CylinderGeometry(NAIL_HEAD_RADIUS * .65, NAIL_HEAD_RADIUS * .65, .06, 24), metal, hammer);
   strikingFace.position.y = -.105;
   const handle = makeMesh(new THREE.CylinderGeometry(0.046, 0.06, 0.87, 16), wood, hammer); handle.position.y = 0.49;
   const sleeve = makeMesh(new THREE.CylinderGeometry(0.063, 0.068, 0.4, 16), grip, hammer); sleeve.position.y = 0.76;
+  instances(new THREE.TorusGeometry(.066,.008,4,16),plinth,9,hammer,(wrap,i)=>{wrap.rotation.x=Math.PI/2;wrap.position.y=.59+i*.038;});
+  for(const y of [.55,.96]){const collar=makeMesh(new THREE.CylinderGeometry(.071,.071,.032,16),brass,hammer);collar.position.y=y;}
   const contactMaterial = new THREE.MeshBasicMaterial({ color: '#ffde8a', depthTest: false }); materials.push(contactMaterial);
   const marker = makeMesh(new THREE.SphereGeometry(0.018, 12, 8), contactMaterial); marker.renderOrder = 10; marker.visible = false;
   let nail = createNail();
@@ -97,9 +114,9 @@ export function createScene(canvas: HTMLCanvasElement) {
       hammer.visible = false;
     } else {
       const portrait = camera.aspect < 0.85;
-      if (currentView === 'booth') camera.position.set(portrait ? 3.9 : 3.1, portrait ? 4.5 : 3.6, portrait ? 5.5 : 4.7);
+      if (currentView === 'booth') camera.position.set(portrait ? 1.1 : 3.1, portrait ? 3.7 : 3.6, portrait ? 8.3 : 6.6);
       else camera.position.set(portrait ? 3.1 : 2.5, 3.5, portrait ? 5 : 4.3);
-      camera.lookAt(0, currentView === 'impact' ? 1.3 : 0.72, 0); hammer.visible = true;
+      camera.lookAt(0, 1.3, currentView === 'booth' ? -.35 : 0); hammer.visible = true;
     }
     camera.updateProjectionMatrix();
   }
@@ -107,7 +124,7 @@ export function createScene(canvas: HTMLCanvasElement) {
   function resize() {
     const rect = canvas.getBoundingClientRect();
     const width = Math.max(1, rect.width); const height = Math.max(1, rect.height);
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+    const dpr = Math.min(window.devicePixelRatio || 1, quality === 'low' ? 1 : 1.75);
     renderer.setSize(Math.round(width * dpr), Math.round(height * dpr), false);
     camera.aspect = width / height; updateCamera(); render();
   }
@@ -115,6 +132,7 @@ export function createScene(canvas: HTMLCanvasElement) {
   const restore = () => { document.querySelector('#notice')!.textContent = ''; resize(); };
   const lose = (event: Event) => { event.preventDefault(); document.querySelector('#notice')!.textContent = 'Graphics paused. Waiting to restore…'; };
   canvas.addEventListener('webglcontextlost', lose); canvas.addEventListener('webglcontextrestored', restore);
+  renderer.shadowMap.enabled = quality !== 'low'; environment.setQuality(quality === 'low');
   poseNail(nail); resize();
   const transitionFrom = new THREE.Vector3();
   const transitionRotation = new THREE.Quaternion();
@@ -125,6 +143,7 @@ export function createScene(canvas: HTMLCanvasElement) {
   let lastPresentationActor = '';
   let rememberedDepth = nail.depth;
   function present(snapshot: DuelSnapshot, dt: number) {
+    environment.update(dt);
     const { phase, elapsed, actor, pending } = snapshot;
     const inTarget = phase === 'NAIL_SETUP' || phase === 'TARGET_Y' || phase === 'TARGET_X' || phase === 'RETICLE';
     const requestedView: CameraView = ['MATCH_INTRO','ROUND_RESULT','MATCH_RESULT','TURN_HANDOFF'].includes(phase) ? 'booth' : inTarget ? 'target' : 'impact';
@@ -187,6 +206,20 @@ export function createScene(canvas: HTMLCanvasElement) {
   }
   return {
     present,
+    async prepare() {
+      for (const view of ['booth','target','impact'] as CameraView[]) {
+        currentView=view;updateCamera();renderer.compile(scene,camera);render();
+        await new Promise<void>(resolve=>{const channel=new MessageChannel();channel.port1.onmessage=()=>{channel.port1.close();channel.port2.close();resolve();};channel.port2.postMessage(null);});
+      }
+      currentView='booth';updateCamera();render();
+    },
+    async profile() {
+      const samples:number[]=[];
+      for(let i=0;i<60;i++){await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));const start=performance.now();render();samples.push(performance.now()-start);}
+      samples.sort((a,b)=>a-b);return {medianMs:samples[30]!,p95Ms:samples[57]!,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles};
+    },
+    setQuality(value: 'low'|'high') {quality=value;renderer.shadowMap.enabled=value==='high';environment.setQuality(value==='low');resize();},
+    metrics() {return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,quality};},
     setNail: poseNail,
     setView(view: CameraView) { currentView = view; updateCamera(); render(); },
     showStrike(result: StrikeResult) {
@@ -206,7 +239,7 @@ export function createScene(canvas: HTMLCanvasElement) {
       disposed = true; observer.disconnect();
       canvas.removeEventListener('webglcontextlost', lose); canvas.removeEventListener('webglcontextrestored', restore);
       geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose());
-      key.shadow.dispose(); renderer.dispose();
+      environment.dispose(); environmentMap.dispose(); key.shadow.dispose(); renderer.dispose();
     },
   };
 }

@@ -1,4 +1,4 @@
-/** E4 implements loading/caching. URLs must be versioned; never cache errors. */
+/** Versioned asset contract. Never cache error responses or unversioned content. */
 export interface AssetEntry {
   readonly id: string;
   readonly url: string;
@@ -18,5 +18,3 @@ export interface AssetLoader {
   prepare(manifest: AssetManifest, onProgress: (progress: AssetProgress) => void, signal?: AbortSignal): Promise<void>;
   dispose(): void;
 }
-/** No downloaded assets or fabricated music are needed by the E1 procedural scene. */
-export const FOUNDATION_MANIFEST: AssetManifest = { version: 'e1', assets: [] };

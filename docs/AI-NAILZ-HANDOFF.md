@@ -1,11 +1,11 @@
 # Nailz! handoff
 
 ## Checkpoint
-- **E3 implemented. Next execution: E4 only**, after verifying origin and reading the human playtest limitation below.
-- Repository: https://github.com/khoix/Nailz, branch `codex/nailz-arcade-build`. E3 starts from E2 commit `e3f77ea4efcc8b0f14921dce3163784c8d02fbec`.
+- **E4 implemented and saved; full production E2E gate remains incomplete within the 20-minute budget. Continue E4 validation before E5.**
+- Repository: https://github.com/khoix/Nailz, branch `codex/nailz-arcade-build`. E4 starts from green CI commit `9c6da914eab23927535aa520eea41bb2c8637500`. PR #2 was merged externally before E4; continue the same feature branch.
 - Complete five-nail matches in Solo — vs. Operator and 2 Players — Pass & Play. Random first starter, alternating nail starters, all five nails even after an early clinch, round/match results, scoring, rematch, and mode selection outside matches.
-- Local rematches swap the first starter. Both participants use E2's existing Y/X/focus/swipe pipeline and identical timing. The operator has no competitive local turns. Existing primitive scene remains temporary; operator character/host art comes later.
-- User supplies music later. No music was generated or substituted. Dynamic Tap to Play, preload/cache, gesture-initiated audio, final art, and menu polish remain in their planned executions.
+- Local rematches swap the first starter. Both participants use E2's existing Y/X/focus/swipe pipeline and identical timing. The operator has no competitive local turns. Carnival scenery and hero props are now authored; operator character/host art comes in E5.
+- User supplies music later. No music was generated or substituted. Preload/cache and render preparation are implemented. Dynamic Tap to Play, gesture-initiated audio, operator animation, effects, and menu polish remain in E5–E7.
 
 ## Architecture and rules
 - `src/game/duel.ts` remains the single DOM-free state machine. Participant controller type replaces hardcoded player-side checks. `advanceRound()` resets the nail and picks the alternating starter; the fifth result leads to MATCH_RESULT. There are no delayed AI callbacks to survive restart or mode changes.
@@ -25,7 +25,7 @@
 - Known risk: strong partial strikes can donate an easy finish. Champion win rate differs substantially by first starter (60.2% when operator starts, 81.2% when proxy human starts). Initial 8% perfect-input Champion was weaker than Hard; 22% gives useful model separation. Do not add hidden comeback/depth-aware damage to obscure this. Human playtests must decide whether Champion one-hit frequency and match pacing feel right.
 
 ## Validation
-- `npm run check`: typecheck, 31 unit tests, production build. Includes complete solo matches at every difficulty, complete local matches, all-five-round enforcement, same-person next-nail readiness, pause freezes, identical local difficulty behavior, score ownership, point/nail priority, exactly-once awards, rematch reset/swap, seeded inputs, and E1/E2 strike/input regressions.
+- E3 baseline: `npm run check`: typecheck, 31 unit tests, production build. Includes complete solo matches at every difficulty, complete local matches, all-five-round enforcement, same-person next-nail readiness, pause freezes, identical local difficulty behavior, score ownership, point/nail priority, exactly-once awards, rematch reset/swap, seeded inputs, and E1/E2 strike/input regressions.
 - `npm run test:duel-browser`: preserved E2 controls coverage with E3 round transitions. Perfect pointer finish, actual touch taps, reticle timeout, cancelled swipe, weak swipe, solo operator return, and rotation.
 - `npm run test:match-browser`: normal UI pointer controls for two full local matches, old-finger readiness blocking, cancelled ready, pause/background/rotation, ready tap consumption, same-person next-nail label, no automatic local strike, rematch swap, score ownership, and mode switch back to solo.
 - `npm run test:browser`: existing E1 fixture regression; unchanged script.
@@ -42,12 +42,20 @@
 
 - Follow-up result: all six production E2E scenarios passed on Chromium 153 (software rendered, DPR .5), including four complete solo matches and two complete local matches. All 31 unit tests passed. Checked-in report: `docs/validation/e3/production-e2e.json`. Raw traces/screenshots remain in `artifacts/e2e/`; CI uploads equivalent artifacts on future runs.
 
-## CI screenshot correction
-Initial hosted workflows passed installation, unit tests, and build, then hit 20-second screenshot timeouts. Channel changes, CDP view capture, virtual-frame advances, and headed Xvfb did not resolve them; those capture workarounds were removed. The saved trace shows a follow-up screenshot completing ~7 seconds after the original 20-second timeout, consistent with software WebGL readback backlog. It also exposed `/favicon.ico` 404 console errors absent in the custom local browser.
-CI now uses DPR .5 (390×844 CSS viewport and identical inputs), matching the original local production E2E density. Only explicit screenshot capture gets a 60-second budget; regular action timeouts remain 20 seconds and every screenshot/assertion/error guard still fails normally. Capture does not change the clock. Full Chromium is used with DOM/action/source traces and explicit images, without continuous screencasting. `public/favicon.svg` is linked from HTML to resolve the missing resource. The new hosted run passed all screenshot captures and exposed the solo rotation test checking visibility before Chromium delivered the native resize event. It now waits for the pause card, matching the existing local-match test. Verify the newest hosted runs before calling CI fixed.
+## E4 environment / loading
+- `src/scene/environment.ts`: enamel counter, scalloped striped canopy, dimensional illuminated marquee, sculpted bear prizes, layered booths/pennants/wheel, restrained prize sway (paused/reduced-motion aware). Static meshes batch by material; bulbs and hero surface details instance.
+- `src/scene/createScene.ts`: lathed block and bevelled nail head, rounded hammer with wrapped grip, original versioned end-grain texture, warm/cool/rim lighting and PMREM reflections. Shared-nail scale, fixed target camera, hit radius, contact pivot, and strike timing are preserved. Booth framing now includes the sign.
+- `src/assets/manifest.ts` + `loader.ts`: versioned required textures, cache/MIME/status validation, session reuse, failed-image invalidation/retry, storage/quota fallback, and retirement of only old Nailz caches after readiness. `main.ts` decodes textures, prepares three view paths in separate tasks, then mounts the normal UI. It is a simple loading UI; E7 still owns intent/audio title choreography.
+- Source/license/bytes/settings/ownership: `docs/ASSET-MANIFEST.md`. Scene disposes geometry/materials/shadows/PMREM; startup owns decoded textures and loader memory. No music added or requested.
+- High is default; `?quality=low` removes dynamic shadows/distant scenery and caps DPR at 1. `setQuality()` is the later menu integration hook. High caps DPR at 1.75. No gameplay timing changes.
+- 390×844 and 844×390 booth/target/impact captures and rendering baseline: `docs/validation/e4/`. Measured sample: 109 calls, 46,248 triangles; 1.2ms median /1.9ms p95 CPU submission on software Chromium. Not phone GPU performance.
+- `npm run test:environment` checks visual fixtures and records the 60-frame profile. `tests/loading-browser.mjs` is added to production E2E: cold/warm starts, obsolete-cache cleanup, corrupt-cache recovery, decode retry, denied storage and low tier. Five new unit tests cover HTTP failure/retry, version changes, quota/storage denial, bad cache, optional failure and abort (36 total).
 
-## E4 starting point
-Read E4 in `docs/NAILZ-BUILD-PLAN.md`: carnival environment and lighting. Preserve the tested match/input/physics contracts, target-camera stability, readable handoff cards, named identities, and exact shared-nail scoring. Do not begin E4 automatically. The current scene is primitive and should not be represented as the final stunning arcade art.
+## CI baseline
+Previous screenshot-timeout repairs are retained: full Chromium, DPR .5 in CI, 60-second explicit screenshot timeout, normal 20-second actions, source/DOM traces without screencasting, favicon served, and auto-wait for native rotation. Both push and PR workflows passed on the E3 CI-fix commit (runs 37226547421 and 37226551098). E4 adds visual cost and loading coverage; inspect its new run separately, never infer it passed from E3.
+
+## Resume E4 validation, then E5
+Latest changes include a CSS-only HUD contrast repair (targeted browser capture passed) and moving the controlled-clock pause before navigation, avoiding slow startup advancing past the test timestamp (targeted startup/aim check passed). All 36 unit tests, typecheck/build, six environment views, loader E2E, solo-controls E2E, and both local matches passed. The four-difficulty full solo run was still pending at save cutoff; do not count old E3 artifact results as E4. Run the complete production suite and inspect the new GitHub run. After E4 regression validation passes, read E5 in `docs/NAILZ-BUILD-PLAN.md`: expressive operator and polished physical animation. Reuse the finished booth, cache/preparation pipeline, original hit geometry, match/input/physics contracts, and stable target camera. Keep E6 impact VFX/audio and E7 final title/menu work separate. Physical-device and two-person feel validation remain pending; the new PMREM environment's context-loss recovery needs E8 testing. Do not begin E5 automatically.
 
 ## Persistence
 Shell Git has read access but no push credentials. Use connected GitHub Git Data APIs on this feature branch: upload changed blobs/tree, create a commit with the verified branch head as parent, update the same ref without force, fetch, compare tree SHA, and align local history only after exact content verification. Preserve the local checkpoint before aligning API-created history. Do not initialize main, merge, or deploy by default.
