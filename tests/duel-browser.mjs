@@ -45,7 +45,7 @@ await runScenario('solo-controls',5175,async ({page,errors,artifactDir,url})=>{
  assert.equal(await page.locator('#app').getAttribute('data-actor'),'p1');
  await captureScreenshot(page,`${artifactDir}/target.png`);
  await page.setViewportSize({width:844,height:390});await page.clock.runFor(50);
- assert.equal(await page.locator('#pause-card').isVisible(),true);
+ await page.locator('#pause-card').waitFor({state:'visible'});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await captureScreenshot(page,`${artifactDir}/landscape-paused.png`);
  assert.deepEqual(errors,[]);
