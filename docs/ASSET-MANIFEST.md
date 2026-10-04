@@ -10,6 +10,7 @@ All game art in E4 is original code-authored geometry or SVG artwork created for
 | Booth, canopy, bears, wheel, festival | `src/scene/environment.ts` | Original procedural meshes | Batched static meshes; independently swaying prize pivots; instanced bulbs |
 | Reflection environment / rounded mesh utilities | Three.js pinned npm dependency | Three.js MIT license in `node_modules/three/LICENSE` | RoomEnvironment produces an in-memory PMREM; no fetched environment map |
 | Favicon | `public/favicon.svg` | Original authored SVG from CI repair | N! mark |
+| Operator rig / poses | `src/scene/operator.ts`, `src/scene/animation.ts` | Original procedural geometry and code-authored poses | Articulated arms, face, apron and cap; shared deterministic strike timeline |
 | Music | None | User will supply it later | No substitute music, no music request |
 
 ## Loader contract
@@ -27,3 +28,7 @@ High (default): sRGB color maps/output, ACES exposure .95, one 1024² shadow map
 Static scenery merges by material and bulbs instance together. Prize motion honors reduced motion and paused simulation time. The fixed top-down targeting camera and nail-local radius .115 remain unchanged; the booth camera now frames the marquee and hero together. The raised hammer contact face retains its original radius, offset and timing.
 
 Measured development captures and CPU submission profile are in `docs/validation/e4/`. CPU timing in software-rendered Chromium is not a phone GPU/frame-rate claim. E8 must measure real iPhone/Android performance and tune tiers.
+
+## E5 operator ownership
+
+The scene owns and disposes the operator geometry/materials and rig. No additional downloads are required. Pose inspection fixtures are development-only (`src/dev/animationFixtures.ts`); production has no pose injection API. Hand transforms follow the sampled hammer, while only the existing game model applies contact. See `docs/validation/e5/README.md` for clip names, timing, screenshots, and validation limits. Stable human target views reuse the last WebGL frame while SVG aim runs continuously; pause and ambient drawing avoid redundant GPU work.

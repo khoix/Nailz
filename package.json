@@ -18,7 +18,8 @@
     "test:match-browser": "node tests/match-browser.mjs",
     "balance": "node tests/balance.ts",
     "test:e2e": "npm run build && node tests/e2e.mjs",
-    "test:environment": "node tests/environment-browser.mjs"
+    "test:environment": "node tests/environment-browser.mjs",
+    "test:operator": "node tests/operator-browser.mjs"
   },
   "dependencies": {
     "three": "0.186.1"

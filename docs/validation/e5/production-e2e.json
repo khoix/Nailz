@@ -1,0 +1,86 @@
+{
+  "checkpoint": "E5",
+  "status": "passed-local",
+  "unitTests": 40,
+  "target": "production builds served by Vite preview",
+  "results": [
+    {
+      "name": "asset-loading",
+      "browserVersion": "153.0.8010.0",
+      "browserChannel": "custom executable",
+      "deviceScaleFactor": 0.5,
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 12988,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-controls",
+      "browserVersion": "153.0.8010.0",
+      "browserChannel": "custom executable",
+      "deviceScaleFactor": 0.5,
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 67018,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "local-matches",
+      "browserVersion": "153.0.8010.0",
+      "browserChannel": "custom executable",
+      "deviceScaleFactor": 0.5,
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 162298,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-easy",
+      "browserVersion": "153.0.8010.0",
+      "browserChannel": "custom executable",
+      "deviceScaleFactor": 0.5,
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 104558,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-normal",
+      "browserVersion": "153.0.8010.0",
+      "browserChannel": "custom executable",
+      "deviceScaleFactor": 0.5,
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 79989,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-hard",
+      "browserVersion": "153.0.8010.0",
+      "browserChannel": "custom executable",
+      "deviceScaleFactor": 0.5,
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 102486,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-champion",
+      "browserVersion": "153.0.8010.0",
+      "browserChannel": "custom executable",
+      "deviceScaleFactor": 0.5,
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 81037,
+      "errors": [],
+      "failure": null
+    }
+  ],
+  "scope": "Complete local E2E run passed. Later presentation-only batching/lean refinements were additionally verified by the operator-pose browser check; hosted CI validates the exact saved tree."
+}

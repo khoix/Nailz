@@ -1,11 +1,11 @@
 # Nailz! handoff
 
 ## Checkpoint
-- **E4 implemented and saved; full production E2E gate remains incomplete within the 20-minute budget. Continue E4 validation before E5.**
-- Repository: https://github.com/khoix/Nailz, branch `codex/nailz-arcade-build`. E4 starts from green CI commit `9c6da914eab23927535aa520eea41bb2c8637500`. PR #2 was merged externally before E4; continue the same feature branch.
+- **E5 implemented. All 40 unit tests and seven local production E2E scenarios passed; check hosted CI on the saved tree before E6.**
+- Repository: https://github.com/khoix/Nailz, branch `codex/nailz-arcade-build`. E5 starts from E4 commit `188c765e11fe496f386be91d4511dbc4914e9282`. PR #2 was merged externally before E4; continue the same feature branch.
 - Complete five-nail matches in Solo — vs. Operator and 2 Players — Pass & Play. Random first starter, alternating nail starters, all five nails even after an early clinch, round/match results, scoring, rematch, and mode selection outside matches.
-- Local rematches swap the first starter. Both participants use E2's existing Y/X/focus/swipe pipeline and identical timing. The operator has no competitive local turns. Carnival scenery and hero props are now authored; operator character/host art comes in E5.
-- User supplies music later. No music was generated or substituted. Preload/cache and render preparation are implemented. Dynamic Tap to Play, gesture-initiated audio, operator animation, effects, and menu polish remain in E5–E7.
+- Local rematches swap the first starter. Both participants use E2's existing Y/X/focus/swipe pipeline and identical timing. The operator has no competitive local turns. Carnival scenery and hero props are now authored; the operator now has an articulated rig, grip following, and snapshot-driven reactions.
+- User supplies music later. No music was generated or substituted. Preload/cache and render preparation are implemented. Dynamic Tap to Play, gesture-initiated audio, effects and menu polish remain in E6–E7.
 
 ## Architecture and rules
 - `src/game/duel.ts` remains the single DOM-free state machine. Participant controller type replaces hardcoded player-side checks. `advanceRound()` resets the nail and picks the alternating starter; the fifth result leads to MATCH_RESULT. There are no delayed AI callbacks to survive restart or mode changes.
@@ -54,8 +54,17 @@
 ## CI baseline
 Previous screenshot-timeout repairs are retained: full Chromium, DPR .5 in CI, 60-second explicit screenshot timeout, normal 20-second actions, source/DOM traces without screencasting, favicon served, and auto-wait for native rotation. Both push and PR workflows passed on the E3 CI-fix commit (runs 37226547421 and 37226551098). E4 adds visual cost and loading coverage; inspect its new run separately, never infer it passed from E3.
 
-## Resume E4 validation, then E5
-Latest changes include a CSS-only HUD contrast repair (targeted browser capture passed) and moving the controlled-clock pause before navigation, avoiding slow startup advancing past the test timestamp (targeted startup/aim check passed). All 36 unit tests, typecheck/build, six environment views, loader E2E, solo-controls E2E, and both local matches passed. The four-difficulty full solo run was still pending at save cutoff; do not count old E3 artifact results as E4. Run the complete production suite and inspect the new GitHub run. After E4 regression validation passes, read E5 in `docs/NAILZ-BUILD-PLAN.md`: expressive operator and polished physical animation. Reuse the finished booth, cache/preparation pipeline, original hit geometry, match/input/physics contracts, and stable target camera. Keep E6 impact VFX/audio and E7 final title/menu work separate. Physical-device and two-person feel validation remain pending; the new PMREM environment's context-loss recovery needs E8 testing. Do not begin E5 automatically.
+## E5 operator and shared timeline
+- `src/scene/operator.ts`: original character with apron, cap/curls, expressive brows/mouth, articulated two-link arms and hands. Material batches keep static parts together. The right wrist follows the hammer grip during solo operator actions. Local mode always keeps the operator in host/setup/straighten/reaction roles.
+- `src/scene/animation.ts`: nine snapshot-derived clips and ready/swing/rebound samples. Contact remains exactly at `DUEL_TIMING.contact`; no new scoring or gameplay transitions. Setup/straightening reach toward the visible nail. Exaggerated anticipating body lean keeps the raised grip in reach.
+- No animation callbacks/tweens survive restart. Paused/resume-countdown snapshots force zero visual dt. Human aim keeps the stable overhead view; AI aim uses the action camera so the operator's pose is visible.
+- E4 CI failed at the ten-minute local-match watchdog, after unit/loading/solo-control passes. E5 skips redundant settled human-target and paused draws, caps ambient menu/handoff rendering at 30fps, and limits tiny character shadow casters. Input/model/SVG aiming continue at their original cadence. New hosted CI must be checked; do not call the old failure fixed without that evidence.
+- `npm run check`: 40 tests, typecheck, build. New tests cover exact animation contact, nonpenetrating rebound, reaction ownership, pass-and-play no-swing, frozen sampling, and restart cancellation. Existing model tests still enforce exactly-once contact and straightening depth preservation.
+- `npm run test:operator`: 13 pose cases, wrist-to-grip alignment, freeze/reset for every case, target/impact/landscape views. Development-only inspector includes pose/freeze/reset controls; production exposes no fixture injection. Captures/rig timing/provenance: `docs/validation/e5/` and `docs/ASSET-MANIFEST.md`.
+- All seven local production scenarios passed (loading, controls, two local matches, and all four solo difficulties). Outcomes and exact validation scope are recorded in `docs/validation/e5/production-e2e.json` at save time. Do not infer completion from old E3/E4 results. Physical-device comfort/GPU cost and continuous slow-motion clipping review remain untested; see the validation notes.
+
+## E6 starting point
+After verifying E5 regression and new hosted CI, read E6 in the build plan: impact effects, sound, and supported haptics. Reuse snapshot-derived poses, the shared contact event, current prop pivots, operator grip, and loader. Do not introduce animation-owned strike resolution. User supplies music later; none was generated or substituted. Final Tap to Play/audio-intent presentation and menus remain E7. Do not begin E6 automatically.
 
 ## Persistence
 Shell Git has read access but no push credentials. Use connected GitHub Git Data APIs on this feature branch: upload changed blobs/tree, create a commit with the verified branch head as parent, update the same ref without force, fetch, compare tree SHA, and align local history only after exact content verification. Preserve the local checkpoint before aligning API-created history. Do not initialize main, merge, or deploy by default.

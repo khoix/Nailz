@@ -1,6 +1,6 @@
 # Nailz!
 
-A mobile-first precision hammering arcade game. **Current milestone: E4 carnival environment and asset preparation** — solo versus four operator difficulties, or two-player pass-and-play on one phone. Timing controls, animated contact, scoring, rematches, and protected handoffs are playable. The booth, hero props, lighting, and asset cache are implemented; the operator character, effects, and final title/menus remain later milestones.
+A mobile-first precision hammering arcade game. **Current milestone: E5 operator and physical animation** — solo versus four operator difficulties, or two-player pass-and-play on one phone. Timing controls, animated contact, scoring, rematches, and protected handoffs are playable. The booth, hero props, lighting, and asset cache are implemented; the articulated operator and hammer motion are implemented; effects and final title/menus remain later milestones.
 
 ## Run
 
@@ -38,7 +38,7 @@ Music will be supplied by the user later. `MUSIC` remains null; no generated or 
 
 ## Continue
 
-Read `docs/AI-NAILZ-HANDOFF.md`, then the relevant execution in `docs/NAILZ-BUILD-PLAN.md`. Preserve the same branch. The plan contains the complete scope, visual direction, and acceptance criteria. Match orchestration, four AI input presets, and pass-and-play are implemented. E5 is the operator/animation milestone; do not start it without a new execution request.
+Read `docs/AI-NAILZ-HANDOFF.md`, then the relevant execution in `docs/NAILZ-BUILD-PLAN.md`. Preserve the same branch. The plan contains the complete scope, visual direction, and acceptance criteria. Match orchestration, four AI input presets, and pass-and-play are implemented. E6 is the impact-effects/audio milestone; verify the current CI gate before starting it.
 
 ## Browser smoke check
 
@@ -79,3 +79,7 @@ GitHub Actions uses full headless Chromium with software WebGL at DPR 0.5; the p
 See `docs/ASSET-MANIFEST.md` for asset provenance, cache/version rules, rendering settings, and disposal ownership. `?quality=low` selects the basic low tier; the default high tier caps DPR at 1.75. `npm run test:environment` captures booth, target, and impact views at portrait and landscape sizes and profiles CPU render submission in the development inspector.
 
 Production E2E also verifies cold/warm cache loading, old-cache retirement, corrupted-cache refetch, failed-image retry, and denied-storage fallback. Node tests cover HTTP failures, version changes, optional failures, and aborts.
+
+## Operator and motion
+
+The host has nine sampled poses, an articulated hammer grip, player-hit reactions, and host-only behavior in local play. Contact timing and scoring remain simulation-owned. `npm run test:operator` inspects pose alignment, pause/reset cleanup, near-flush/glancing contact, and camera views through the development inspector. See `docs/validation/e5/README.md` for timing and captures.

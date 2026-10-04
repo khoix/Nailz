@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildEnvironment } from './environment.ts';
+import { createOperator } from './operator.ts';
+import { hammerMotion } from './animation.ts';
 import type { NailState, StrikeResult } from '../game/types.ts';
 import { createNail } from '../game/strike.ts';
 import { DUEL_TIMING, type DuelSnapshot } from '../game/duel.ts';
@@ -29,6 +31,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
   scene.environment = environmentMap.texture; scene.environmentIntensity = .45;
   room.dispose(); pmrem.dispose();
   const environment = buildEnvironment(scene, textures);
+  const operator = createOperator(scene);
   let quality: 'low' | 'high' = new URLSearchParams(location.search).get('quality') === 'low' ? 'low' : 'high';
   const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 40);
   const materials: THREE.Material[] = [];
@@ -111,12 +114,12 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     camera.up.set(0, 1, 0);
     if (currentView === 'target') {
       camera.position.set(0, h + 2.4, 0); camera.up.set(0, 0, -1); camera.lookAt(0, h, 0);
-      hammer.visible = false;
+      hammer.visible = false;operator.setVisible(false);
     } else {
       const portrait = camera.aspect < 0.85;
       if (currentView === 'booth') camera.position.set(portrait ? 1.1 : 3.1, portrait ? 3.7 : 3.6, portrait ? 8.3 : 6.6);
       else camera.position.set(portrait ? 3.1 : 2.5, 3.5, portrait ? 5 : 4.3);
-      camera.lookAt(0, 1.3, currentView === 'booth' ? -.35 : 0); hammer.visible = true;
+      camera.lookAt(0, 1.3, currentView === 'booth' ? -.35 : 0); hammer.visible = true;operator.setVisible(true);
     }
     camera.updateProjectionMatrix();
   }
@@ -142,10 +145,13 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
   let lastPresentationPhase = '';
   let lastPresentationActor = '';
   let rememberedDepth = nail.depth;
+  let ambientRenderTime=0;let previousNailDepth=-1;let wasPaused=false;let cameraWasSettled=false;
+  const gripPoint=new THREE.Vector3(),gripRotation=new THREE.Quaternion();
   function present(snapshot: DuelSnapshot, dt: number) {
+    if(snapshot.paused||snapshot.resumeIn>0)dt=0;
     environment.update(dt);
     const { phase, elapsed, actor, pending } = snapshot;
-    const inTarget = phase === 'NAIL_SETUP' || phase === 'TARGET_Y' || phase === 'TARGET_X' || phase === 'RETICLE';
+    const inTarget = phase === 'NAIL_SETUP' || (snapshot.isHuman && ['TARGET_Y','TARGET_X','RETICLE'].includes(phase));
     const requestedView: CameraView = ['MATCH_INTRO','ROUND_RESULT','MATCH_RESULT','TURN_HANDOFF'].includes(phase) ? 'booth' : inTarget ? 'target' : 'impact';
     // Draw impact insertion and bend over 90ms; model already owns the result.
     let visibleNail = snapshot.nail;
@@ -177,16 +183,8 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     if (phase === 'READY_TO_SWING' || phase === 'SWING' || phase === 'IMPACT_RESOLUTION') {
       const offset = pending?.offset ?? snapshot.aim;
       const point = nailLocalToWorld(offset.x, offset.y, headHeight + .135);
-      let lift = .72;
-      let angle = -.55;
-      if (phase === 'SWING') {
-        const t = Math.min(1, elapsed / DUEL_TIMING.contact);
-        lift = .72 * (1 - t * t * t); angle = -.55 * (1 - t);
-        rememberedDepth = snapshot.nail.depth;
-      } else if (phase === 'IMPACT_RESOLUTION') {
-        const bounce = Math.min(1, elapsed / .24);
-        lift = Math.sin(bounce * Math.PI / 2) * (.13 + (pending?.usablePower ?? 0) * .13); angle = -.12 * bounce;
-      }
+      const {lift,angle}=hammerMotion(snapshot);
+      if(phase==='SWING')rememberedDepth=snapshot.nail.depth;
       // Head's bottom face reaches the sampled nail-local contact at t=1.
       hammer.position.copy(point).add(new THREE.Vector3(.35 * lift, lift, 0));
       hammer.rotation.set(0, 0, angle);
@@ -201,8 +199,18 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
       marker.position.copy(nailLocalToWorld(pending.offset.x, pending.offset.y, BLOCK_TOP + visibleNail.length - rememberedDepth + .046));
       contactMaterial.color.set('#ffde8a');
     }
+    hammer.updateWorldMatrix(true,false);
+    gripPoint.set(0,.76,0).applyMatrix4(hammer.matrixWorld);hammer.getWorldQuaternion(gripRotation);
+    operator.setVisible(!inTarget || phase==='NAIL_SETUP');
+    operator.update(snapshot,dt,gripPoint,gripRotation,head.position);
+    const staticTarget=inTarget&&phase!=='NAIL_SETUP'&&cameraWasSettled&&transitionTime===1&&!changed&&phase===lastPresentationPhase&&previousNailDepth===snapshot.nail.depth;
+    const stillPaused=snapshot.paused&&wasPaused;
+    const ambient=['MATCH_INTRO','TURN_HANDOFF','ROUND_RESULT','MATCH_RESULT'].includes(phase);
+    ambientRenderTime+=dt;
+    const ambientDue=!ambient||ambientRenderTime>=1/30||changed||phase!==lastPresentationPhase;
+    if(!staticTarget&&!stillPaused&&ambientDue){render();ambientRenderTime=0;}
+    previousNailDepth=snapshot.nail.depth;wasPaused=snapshot.paused;cameraWasSettled=transitionTime===1;
     lastPresentationPhase = phase; lastPresentationActor = actor;
-    render();
   }
   return {
     present,
@@ -220,6 +228,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     },
     setQuality(value: 'low'|'high') {quality=value;renderer.shadowMap.enabled=value==='high';environment.setQuality(value==='low');resize();},
     metrics() {return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,quality};},
+    animationState(){return {clip:operator.clip,operatorVisible:operator.root.visible,grip:gripPoint.toArray(),...operator.diagnostics()};},
     setNail: poseNail,
     setView(view: CameraView) { currentView = view; updateCamera(); render(); },
     showStrike(result: StrikeResult) {
@@ -239,7 +248,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
       disposed = true; observer.disconnect();
       canvas.removeEventListener('webglcontextlost', lose); canvas.removeEventListener('webglcontextrestored', restore);
       geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose());
-      environment.dispose(); environmentMap.dispose(); key.shadow.dispose(); renderer.dispose();
+      operator.dispose(); environment.dispose(); environmentMap.dispose(); key.shadow.dispose(); renderer.dispose();
     },
   };
 }
