@@ -1,47 +1,53 @@
 # Nailz! handoff
 
-## Completed
-- **E1 foundation implemented and validated. Next execution: E2 after verifying this commit on origin.**
-- Repository: https://github.com/khoix/Nailz — originally empty. Reuse branch `codex/nailz-arcade-build`.
-- Pinned TypeScript/Vite/Three.js app; responsive procedural block, nail, and hammer; booth/target/impact camera anchors; visible depth and directional bend.
-- Pure strike resolver, explicit application with stale/duplicate guards, straightening, seeded independent random streams, shared human/AI participant types, startup and asset/audio contracts.
-- Development-only fixture inspector; production excludes fixture code. This is deliberately not a playable match yet.
-- Latest build plan and original proposal stored beside this handoff. User additions: two-player pass-and-play; dynamic preloading/caching Tap to Play title; music supplied later, never generated.
+## Checkpoint
+- **E3 implemented. Next execution: E4 only**, after verifying origin and reading the human playtest limitation below.
+- Repository: https://github.com/khoix/Nailz, branch `codex/nailz-arcade-build`. E3 starts from E2 commit `e3f77ea4efcc8b0f14921dce3163784c8d02fbec`.
+- Complete five-nail matches in Solo — vs. Operator and 2 Players — Pass & Play. Random first starter, alternating nail starters, all five nails even after an early clinch, round/match results, scoring, rematch, and mode selection outside matches.
+- Local rematches swap the first starter. Both participants use E2's existing Y/X/focus/swipe pipeline and identical timing. The operator has no competitive local turns. Existing primitive scene remains temporary; operator character/host art comes later.
+- User supplies music later. No music was generated or substituted. Dynamic Tap to Play, preload/cache, gesture-initiated audio, final art, and menu polish remain in their planned executions.
 
-## Architecture / decisions
-- Node 24 recommended; >=22.18 supports native TypeScript tests. Versions pinned in package.json and lockfile: Three 0.186.1, types 0.186.0, TypeScript 7.0.2, Vite 8.3.2, Playwright 1.62.1.
-- Nail length 1 world unit; setup insertion .16; visible starting length .84. Depth is insertion, not exposed height.
-- Hit X/Y normalize by nail-head radius .115. +X = world +X; +Y = world -Z. Top-down camera up is -Z. `getTargetRect()` and `screenToNail()` establish the E2 screen/local boundary; freeze target camera while aiming.
-- Power = min(swipe, focus cap). Focus cap ramps .12 to 1, with a reachable perfect plateau at quality >=.98. Center plateau radius .035. Accuracy efficiency falls quadratically toward contact radius 1.65. Contact envelope is an arcade effective radius; E2 must align the moving hammer contact with the stored offset.
-- Downward force = usable power × efficiency. Lateral force = remaining usable power for contact only. Bend vector opposes the offset; max magnitude .9 radians. Complete misses neither insert nor bend.
-- Fresh perfect capacity is .84. Depth clamps to length; flush epsilon 1e-6. Straightening changes only bend. Strike results include source depth AND strike count, so a miss cannot be applied twice despite unchanged depth.
-- E2 must add action IDs and exactly-once contact application in its state machine. Render presentation must not own outcome logic. Current fixture intentionally resolves against a fresh nail every time; gold dot marks original pre-deformation contact location.
-- State vocabulary includes mode, participant/controller type, pending strike, pause, and TURN_HANDOFF. E3 implements full pass-and-play; no duplicate human input pipeline.
-- Startup state separates readiness, intent, and audio activation. Blocked audio never prevents ready+requested navigation. `MUSIC=null`; loader/cache/audio are contracts only. Implementation remains E4/E6/E7.
-- Initial rules are in the plan: randomized first starter; alternate nails; local rematch swaps first starter; timeout uses minimum focus; cancelled swipe preserves aim/focus; same recipient survives handoff interruption; actor owns penalties.
+## Architecture and rules
+- `src/game/duel.ts` remains the single DOM-free state machine. Participant controller type replaces hardcoded player-side checks. `advanceRound()` resets the nail and picks the alternating starter; the fifth result leads to MATCH_RESULT. There are no delayed AI callbacks to survive restart or mode changes.
+- All results resolve through `strike.ts` and apply once at the contact boundary using action IDs plus the resolver's stale-result guard. Nails won determine the match winner; secondary points never override it.
+- Secondary points: rounded depth delta × 100, +100 finishing, +50 one-hit, −10 complete miss or −5 contact bend above .08 radians. Each actor owns only their own strike's awards/penalties. Negative totals are allowed. Details and rationale in `docs/validation/e3/BALANCE.md`.
+- Local turns enter NAIL_SETUP then TURN_HANDOFF. `ready()` consumes readiness and begins a fresh .4s setup lead-in before Y aiming. Handoff clocks are frozen indefinitely. First turn says who starts; different-person turns say Pass to Player N; same-person next-nail starts say Player N — Next nail.
+- `duelUI.ts` tracks pointers on controls and gameplay. Readiness needs a new down/up on the ready control with no other active pointer. Old fingers, multitouch, cancelled presses, and gestures crossing phase boundaries cannot aim or ready. Lost pointer capture cancels gesture ownership without treating a held finger as released. The keyboard can activate Ready only with no active pointer.
+- Pause/background/rotation/context loss clear pending gestures and preserve the intended recipient. Resume has E2's .8s countdown and never auto-readies a handoff. Rotation immediately renders the pause card.
+- Mode selection is on the initial screen and reachable again from match results. Starting a different mode creates a fresh Duel and resets pending input/AI state. Optional player names, saved records, tutorial, final title, and settings remain E7.
+- Temporary HUD shows named participants, nail count, points, and nail-depth progress. Scene uses controller type to show AI markers, so Player 2 receives normal human aim controls.
 
-## Important files
-- `src/game/{strike,types,tuning,state,random,startup}.ts`
-- `src/scene/createScene.ts`, `src/input/coordinates.ts`
-- `src/assets/contracts.ts`, `src/audio/contracts.ts`
-- `src/dev/{inspector,fixtures}.ts` — dynamically imported only under `import.meta.env.DEV`.
-- `tests/*.test.ts`, `tests/browser-smoke.mjs`; README has exact commands.
-- `docs/NAILZ-BUILD-PLAN.md`, `docs/NAILZ-PROPOSAL.md`, `docs/ASSETS.md`, `docs/EXECUTION-BUDGET.md`.
+## AI and balance
+- `src/game/ai.ts`: Easy/Normal/Hard/Champion use symmetric triangular X/Y error, uniform bounded focus/power, and a reachable perfect-input component. Presets never inspect score/depth/opponent and never multiply damage.
+- Error scales: 1.8 / .95 / .5 / .22. Minimum focus: .3 / .45 / .7 / .86. Minimum requested power: .4 / .55 / .75 / .9. Perfect-input probabilities: .001 / .006 / .025 / .22.
+- `npm run balance` reproduces `docs/validation/e3/balance.json`: 20,000 fresh-nail samples and 2,000 full matches per preset, seed 20261004. A fixed Normal sampler is the simulated human; this is not empirical human performance.
+- Simulated operator match wins: 17.05%, 49.45%, 64.35%, 70.70%. Mean strikes per match: 24.53, 18.02, 13.60, 10.15. Champion fresh-nail one-hit rate: 21.81%.
+- Known risk: strong partial strikes can donate an easy finish. Champion win rate differs substantially by first starter (60.2% when operator starts, 81.2% when proxy human starts). Initial 8% perfect-input Champion was weaker than Hard; 22% gives useful model separation. Do not add hidden comeback/depth-aware damage to obscure this. Human playtests must decide whether Champion one-hit frequency and match pacing feel right.
 
 ## Validation
-- `npm run check`: typecheck, 14 tests, and production build passed.
-- Tests cover reachable one-hit plateau, caps, monotonicity, all cardinal/diagonal bends, misses, invalid inputs, immutable source state, depth bounds, duplicate miss application, finish ownership, random stream isolation, two-human initialization, CSS coordinate normalization, and startup intent/readiness independent of audio failure.
-- `npm run test:browser`: passed in headless Chromium with software WebGL, all three views, fixture results, no page errors, and no horizontal overflow at 390×844, 1280×800, 320×568, 844×390.
-- Portrait/target/impact/desktop screenshots visually reviewed. Impact framing pulled back after inspection. Evidence snapshots in `docs/validation/`.
-- Production JS excludes fixture labels/inspector logic; production scene intentionally reports E1 foundation.
-- Build bundle roughly 537 KB JS / 135 KB gzip, plus small CSS/HTML. Vite emits the expected >500 KB chunk warning; splitting/profiling remains E8, not an E1 blocker.
-- This runtime's standard browser archive download failed. Validation used the Chromium binary distributed via @sparticuz/chromium in temporary scratch, not a project dependency. `NAILZ_CHROMIUM_PATH` supports alternate binaries. Normal environments use `npx playwright install chromium`.
-- Physical iPhone/Android touch, Safari, thermal performance, and audio behavior remain untested, not inferred from headless checks.
+- `npm run check`: typecheck, 31 unit tests, production build. Includes complete solo matches at every difficulty, complete local matches, all-five-round enforcement, same-person next-nail readiness, pause freezes, identical local difficulty behavior, score ownership, point/nail priority, exactly-once awards, rematch reset/swap, seeded inputs, and E1/E2 strike/input regressions.
+- `npm run test:duel-browser`: preserved E2 controls coverage with E3 round transitions. Perfect pointer finish, actual touch taps, reticle timeout, cancelled swipe, weak swipe, solo operator return, and rotation.
+- `npm run test:match-browser`: normal UI pointer controls for two full local matches, old-finger readiness blocking, cancelled ready, pause/background/rotation, ready tap consumption, same-person next-nail label, no automatic local strike, rematch swap, score ownership, and mode switch back to solo.
+- `npm run test:browser`: existing E1 fixture regression; unchanged script.
+- E3 screenshots were selected into `docs/validation/e3/`. Current individual browser checks write to `artifacts/browser/<scenario>/`; production E2E writes to `artifacts/e2e/<scenario>/`. Controlled-clock screenshots are visual/behavior evidence, not frame-rate benchmarks.
+- Software-rendered Chromium is available in this workspace via `NAILZ_CHROMIUM_PATH=/workspace/scratch/2da0bc65e702/nailz-qa/chromium` and `LD_LIBRARY_PATH=/workspace/scratch/2da0bc65e702/nailz-qa`. Tests start their own loopback Vite server. Standard environments can use Playwright's installed Chromium.
+- **Physical iPhone/Android, Safari, human fun/comfort, and two-person phone passing remain untested.** Automated matches do not establish the human quality gate. Gather physical observations before committing to final art if input feel issues appear.
+- Existing bundle-size warning remains (~558KB JS /142KB gzip); optimization is E8, not grounds for broad premature refactoring.
 
-## Known incomplete work
-- E2–E9 intentionally unimplemented: real tap/reticle/swipe controls, animated camera/contact sequence, AI duel, matches, operator, polished environment/effects, full UI/title, caching/audio, tuning, mobile performance.
-- Current primitive art is an intentional E1 fixture, not the final visual-quality target. Target-view branding contrast and camera composition will change with the E2 gameplay HUD; E4 supplies final art.
-- Initial synchronization was blocked by missing shell credentials and automatic review of default-branch initialization. The user supplied an initialized repository on October 4, 2026; its existing main commit is `64f421962c7cf1780bc9a25aa12d1ce0f2671c65`. E1 is being synchronized using the connected GitHub API on the dedicated feature branch based on that commit. Main is preserved. No deployment, PR, or merge is part of this synchronization.
+## Production E2E follow-up requested by user
+- `npm run test:e2e` builds production assets and executes the real UI against Vite preview. The existing development browser scenarios are reused through `tests/browser-harness.mjs`; `tests/solo-matches-browser.mjs` adds complete five-nail solo journeys for all four difficulties, including score ownership, correct winner, and rematch reset.
+- `tests/e2e.mjs` orchestrates the suite and writes a summary. Each scenario records a Playwright trace and JSON result; failure includes a screenshot and page HTML. The harness rejects runtime/console/network/HTTP errors.
+- `.github/workflows/test.yml` runs unit tests and production E2E on push/PR with read-only repository permissions and uploads artifacts. Local execution does not imply that the hosted GitHub Actions job has run.
+- Every later implementation checkpoint must include production E2E; expand the journeys as title/cache/audio/tutorial/settings become available. This follow-up adds testing infrastructure, not E4 art.
 
-## Next execution
-Fetch the feature branch and verify a clean working tree, then run **E2 only**, reading its prompt in the stored build plan. Reuse the resolver and coordinate contracts. First implement the explicit Y -> X -> reticle -> ready -> swing -> contact state flow with timestamped one-thumb input and cancellation guards; then camera/hammer timing and a simple seeded alternating opponent. Use the existing fixture cases to verify that the animated contact and bend explain the same result. End with E2's core-play gate and update this note.
+- Follow-up result: all six production E2E scenarios passed on Chromium 153 (software rendered, DPR .5), including four complete solo matches and two complete local matches. All 31 unit tests passed. Checked-in report: `docs/validation/e3/production-e2e.json`. Raw traces/screenshots remain in `artifacts/e2e/`; CI uploads equivalent artifacts on future runs.
+
+## CI screenshot correction
+Initial hosted workflows passed installation, unit tests, and build, then hit 20-second screenshot timeouts. Channel changes, CDP view capture, virtual-frame advances, and headed Xvfb did not resolve them; those capture workarounds were removed. The saved trace shows a follow-up screenshot completing ~7 seconds after the original 20-second timeout, consistent with software WebGL readback backlog. It also exposed `/favicon.ico` 404 console errors absent in the custom local browser.
+CI now uses DPR .5 (390×844 CSS viewport and identical inputs), matching the original local production E2E density. Only explicit screenshot capture gets a 60-second budget; regular action timeouts remain 20 seconds and every screenshot/assertion/error guard still fails normally. Capture does not change the clock. Full Chromium is used with DOM/action/source traces and explicit images, without continuous screencasting. `public/favicon.svg` is linked from HTML to resolve the missing resource. The new hosted run passed all screenshot captures and exposed the solo rotation test checking visibility before Chromium delivered the native resize event. It now waits for the pause card, matching the existing local-match test. Verify the newest hosted runs before calling CI fixed.
+
+## E4 starting point
+Read E4 in `docs/NAILZ-BUILD-PLAN.md`: carnival environment and lighting. Preserve the tested match/input/physics contracts, target-camera stability, readable handoff cards, named identities, and exact shared-nail scoring. Do not begin E4 automatically. The current scene is primitive and should not be represented as the final stunning arcade art.
+
+## Persistence
+Shell Git has read access but no push credentials. Use connected GitHub Git Data APIs on this feature branch: upload changed blobs/tree, create a commit with the verified branch head as parent, update the same ref without force, fetch, compare tree SHA, and align local history only after exact content verification. Preserve the local checkpoint before aligning API-created history. Do not initialize main, merge, or deploy by default.

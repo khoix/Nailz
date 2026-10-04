@@ -10,7 +10,7 @@ try {
  browser = await playwright.launch({executablePath:process.env.NAILZ_CHROMIUM_PATH || undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'],headless:true});
  const page = await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});
  const errors=[]; page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://127.0.0.1:5174');
+ await page.goto('http://127.0.0.1:5174/?lab');
  await page.locator('#resolve').waitFor();
  assert.equal(await page.locator('#notice').textContent(),'');
  await page.screenshot({path:'artifacts/e1-portrait.png'});

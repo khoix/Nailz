@@ -1,0 +1,61 @@
+{
+  "seed": 20261004,
+  "samplesPerPreset": 20000,
+  "matchesPerPreset": 2000,
+  "humanProxy": "Normal preset; not empirical player data",
+  "durationUnit": "strikes; handoff and deliberation excluded",
+  "results": [
+    {
+      "difficulty": "easy",
+      "meanRadialError": 0.934,
+      "missPercent": 6.13,
+      "freshOneHitPercent": 0.1,
+      "meanFreshDepthGain": 0.12,
+      "starterNailWinPercent": 50.18,
+      "meanStrikesPerNail": 4.91,
+      "meanStrikesPerMatch": 24.53,
+      "operatorMatchWinPercent": 17.05,
+      "operatorWinWhenHumanStarts": 17.6,
+      "operatorWinWhenOperatorStarts": 16.5
+    },
+    {
+      "difficulty": "normal",
+      "meanRadialError": 0.49,
+      "missPercent": 0,
+      "freshOneHitPercent": 0.62,
+      "meanFreshDepthGain": 0.282,
+      "starterNailWinPercent": 52.07,
+      "meanStrikesPerNail": 3.6,
+      "meanStrikesPerMatch": 18.02,
+      "operatorMatchWinPercent": 49.45,
+      "operatorWinWhenHumanStarts": 47.4,
+      "operatorWinWhenOperatorStarts": 51.5
+    },
+    {
+      "difficulty": "hard",
+      "meanRadialError": 0.253,
+      "missPercent": 0,
+      "freshOneHitPercent": 2.54,
+      "meanFreshDepthGain": 0.504,
+      "starterNailWinPercent": 58.74,
+      "meanStrikesPerNail": 2.72,
+      "meanStrikesPerMatch": 13.6,
+      "operatorMatchWinPercent": 64.35,
+      "operatorWinWhenHumanStarts": 59.7,
+      "operatorWinWhenOperatorStarts": 69
+    },
+    {
+      "difficulty": "champion",
+      "meanRadialError": 0.089,
+      "missPercent": 0,
+      "freshOneHitPercent": 21.81,
+      "meanFreshDepthGain": 0.725,
+      "starterNailWinPercent": 24.47,
+      "meanStrikesPerNail": 2.03,
+      "meanStrikesPerMatch": 10.15,
+      "operatorMatchWinPercent": 70.7,
+      "operatorWinWhenHumanStarts": 81.2,
+      "operatorWinWhenOperatorStarts": 60.2
+    }
+  ]
+}

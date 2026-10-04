@@ -1,0 +1,93 @@
+{
+  "executedAt": "2026-10-04T18:27:41.949770+00:00",
+  "gameplayCommit": "7b26e434c19ec70c856f13689c034a6a98612e89",
+  "command": "npm run test:e2e",
+  "target": "production dist served by Vite preview",
+  "browser": "Chromium 153.0.8010.0, headless SwiftShader",
+  "viewportCssPixels": {
+    "width": 390,
+    "height": 844
+  },
+  "deviceScaleFactor": 0.5,
+  "clock": "controlled",
+  "unitTestsPassed": 31,
+  "completeMatches": {
+    "solo": 4,
+    "passAndPlay": 2
+  },
+  "scenarios": [
+    {
+      "name": "local-matches",
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 64743,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-champion",
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 28908,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-controls",
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 17809,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-easy",
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 40015,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-hard",
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 27980,
+      "errors": [],
+      "failure": null
+    },
+    {
+      "name": "solo-normal",
+      "target": "production dist",
+      "status": "passed",
+      "elapsedMs": 28633,
+      "errors": [],
+      "failure": null
+    }
+  ],
+  "runner": {
+    "target": "production build served by vite preview",
+    "results": [
+      {
+        "script": "tests/duel-browser.mjs",
+        "status": "passed",
+        "elapsedMs": 18431
+      },
+      {
+        "script": "tests/match-browser.mjs",
+        "status": "passed",
+        "elapsedMs": 67859
+      },
+      {
+        "script": "tests/solo-matches-browser.mjs",
+        "status": "passed",
+        "elapsedMs": 127033
+      }
+    ]
+  },
+  "limits": [
+    "Not physical phone or mobile OS validation",
+    "Visibility events and rotation are emulated",
+    "Hosted GitHub Actions run not verified in this local result"
+  ]
+}

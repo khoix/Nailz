@@ -14,3 +14,16 @@ Implementation stopped before the 17:01:55 UTC cutoff; the preservation phase be
 Preservation outcome: local commit succeeded; shell push failed for absent credentials. Connected GitHub initialization was rejected by automatic approval review for default-branch scope. No workaround attempted; a complete Git bundle is the durable checkpoint.
 
 Follow-up synchronization authorized October 4, 2026 at 13:18 EDT: repository now has initial main commit 64f421962c7cf1780bc9a25aa12d1ce0f2671c65. Synchronize E1 on the feature branch through the GitHub API; do not begin E2 or modify main.
+
+## E2 — October 4, 2026
+- User request: E2, 100%.
+- Start: 17:31:34 UTC / 13:31:34 EDT.
+- Total: 20 minutes; implementation cutoff 17:47:34 UTC; hard stop 17:51:34 UTC.
+- Reserve final four minutes for handoff, essential verification, GitHub API synchronization, and remote-tree verification.
+
+## E3 — October 4, 2026
+- User request: E3, 100%, **1-minute save phase** (overrides the normal four-minute buffer).
+- Start: 17:57:04 UTC / 13:57:04 EDT.
+- Total: 20 minutes; implementation cutoff 18:16:04 UTC; hard stop 18:17:04 UTC.
+- Implement E3 only. Prepare verification and immutable GitHub objects before the final minute so commit/ref synchronization and exact-tree verification can finish within the user budget.
+- E3 verification finished by 18:13 UTC: 31 unit tests, production build, preserved solo browser regression, two full local browser matches, and balance cohorts passed. Screenshot blobs were prepared before final synchronization. No E4 work started.

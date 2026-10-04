@@ -177,6 +177,12 @@ Measure one-hit frequency, starter advantage, average strikes per nail, and usef
 
 ## 4. Quality gates
 
+### Production end-to-end gate — every implementation checkpoint
+
+Run `npm run test:e2e` before declaring an implementation checkpoint verified. This builds the production bundle and drives it through browser UI controls using Vite preview. The current suite covers the full targeting/swipe loop, all four solo difficulties through five-nail results, local matches/rematches, handoff input isolation, pause/background/rotation, score attribution, and mode changes. It also fails on JavaScript, console, request, and HTTP errors. GitHub Actions runs the suite for pushes and pull requests and retains traces, screenshots, and result JSON.
+
+Extend these journeys as later features land: title/preload readiness and failure recovery, user-gesture audio startup with music absent or supplied, tutorial/settings, persistence, and release navigation. Do not count unit tests or model simulations as browser E2E coverage. Report the actual tested browser, production/development target, and any unfinished cases. Preserve and label a failing checkpoint if its execution budget expires; do not claim that E2E passed. Controlled-clock browser tests do not replace physical-device or human feel tests.
+
 ### Core-play gate — after E2
 
 The duel is playable on a phone with one thumb. Weak swipes feel weak, a centered strong strike feels stronger, a perfect strike can finish a fresh nail, and a glancing hit visibly explains its bend. Do not proceed to full art if these relationships are unclear. Record human playtest observations separately from automated checks.
