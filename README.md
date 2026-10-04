@@ -1,6 +1,6 @@
 # Nailz!
 
-A mobile-first precision hammering arcade game. Solo versus the carnival operator and two-player pass-and-play are planned. **Current milestone: E1 foundation** — a responsive procedural 3D scene and a deterministic strike laboratory, not a playable match yet.
+A mobile-first precision hammering arcade game. Solo versus the carnival operator and two-player pass-and-play are planned. **Current milestone: E2 single-nail duel** — playable timing, swipe input, animated contact, and an alternating computer opponent. Five-nail matches and pass-and-play orchestration arrive in E3.
 
 ## Run
 
@@ -20,7 +20,7 @@ npm run build
 npm run preview
 ```
 
-Development mode shows **Strike Lab**: choose a fixture, resolve against a fresh nail, switch cameras, straighten, or reset. Production builds exclude the inspector and fixtures. The production view intentionally says that gameplay arrives in the next execution.
+Development mode at `/?lab` shows **Strike Lab**: choose a fixture, resolve against a fresh nail, switch cameras, straighten, or reset. Production builds exclude the inspector and fixtures. The normal development and production views run the single-nail duel. Tap to lock the two moving axes, tap when the focus rings match, then swipe downward. Pause and restart are available; turning the device or backgrounding the page pauses the duel.
 
 ## Architecture
 
@@ -38,7 +38,7 @@ Music will be supplied by the user later. `MUSIC` remains null; no generated or 
 
 ## Continue
 
-Read `docs/AI-NAILZ-HANDOFF.md`, then the relevant execution in `docs/NAILZ-BUILD-PLAN.md`. Preserve the same branch. The plan contains the complete scope, visual direction, and acceptance criteria. Full controls, AI turn loop, and animation start in E2; pass-and-play orchestration starts in E3.
+Read `docs/AI-NAILZ-HANDOFF.md`, then the relevant execution in `docs/NAILZ-BUILD-PLAN.md`. Preserve the same branch. The plan contains the complete scope, visual direction, and acceptance criteria. Single-nail controls, AI turn loop, and basic animation are implemented. Pass-and-play and full match orchestration start in E3.
 
 ## Browser smoke check
 
@@ -48,3 +48,5 @@ npm run test:browser
 ```
 
 The test starts its own loopback Vite server, checks fixtures and camera controls at portrait/landscape/desktop sizes, and writes screenshots into ignored `artifacts/`. `NAILZ_CHROMIUM_PATH` can select an already installed Chromium. Software-rendered headless checks do not replace physical iPhone/Android testing.
+
+E2 integration check: `npm run test:duel-browser` uses normal browser pointer controls with a controlled clock to verify a perfect finish, timeout, pause, cancelled swipe, operator alternation, and rotation. Unit tests cover frame-rate-independent resolution and swipe normalization. Physical-phone comfort and human playtesting remain pending.

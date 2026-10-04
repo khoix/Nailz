@@ -1,47 +1,39 @@
 # Nailz! handoff
 
 ## Completed
-- **E1 foundation implemented and validated. Next execution: E2 after verifying this commit on origin.**
-- Repository: https://github.com/khoix/Nailz — originally empty. Reuse branch `codex/nailz-arcade-build`.
-- Pinned TypeScript/Vite/Three.js app; responsive procedural block, nail, and hammer; booth/target/impact camera anchors; visible depth and directional bend.
-- Pure strike resolver, explicit application with stale/duplicate guards, straightening, seeded independent random streams, shared human/AI participant types, startup and asset/audio contracts.
-- Development-only fixture inspector; production excludes fixture code. This is deliberately not a playable match yet.
-- Latest build plan and original proposal stored beside this handoff. User additions: two-player pass-and-play; dynamic preloading/caching Tap to Play title; music supplied later, never generated.
+- **E2 single-nail duel implemented. Next execution: E3**, after verifying this commit on origin and considering the physical playtest limitation below.
+- Reuse `codex/nailz-arcade-build` in https://github.com/khoix/Nailz. E1 was merged by the user into main (`b03505b`); E2 started by fast-forwarding to that identical source tree.
+- Full human sequence: Y line -> X line -> one-pass focus -> downward swipe -> animated impact. Same nail alternates between player and seeded operator until a finishing strike. Restart creates a fresh duel.
+- Normal app runs the duel; development fixture lab is at `/?lab` and excluded from production.
+- Primitive art remains intentional. Full matches/pass-and-play, final character/art/effects, title/preload/cache/music implementations stay in their planned later executions. User supplies music later; no generated music exists.
 
 ## Architecture / decisions
-- Node 24 recommended; >=22.18 supports native TypeScript tests. Versions pinned in package.json and lockfile: Three 0.186.1, types 0.186.0, TypeScript 7.0.2, Vite 8.3.2, Playwright 1.62.1.
-- Nail length 1 world unit; setup insertion .16; visible starting length .84. Depth is insertion, not exposed height.
-- Hit X/Y normalize by nail-head radius .115. +X = world +X; +Y = world -Z. Top-down camera up is -Z. `getTargetRect()` and `screenToNail()` establish the E2 screen/local boundary; freeze target camera while aiming.
-- Power = min(swipe, focus cap). Focus cap ramps .12 to 1, with a reachable perfect plateau at quality >=.98. Center plateau radius .035. Accuracy efficiency falls quadratically toward contact radius 1.65. Contact envelope is an arcade effective radius; E2 must align the moving hammer contact with the stored offset.
-- Downward force = usable power × efficiency. Lateral force = remaining usable power for contact only. Bend vector opposes the offset; max magnitude .9 radians. Complete misses neither insert nor bend.
-- Fresh perfect capacity is .84. Depth clamps to length; flush epsilon 1e-6. Straightening changes only bend. Strike results include source depth AND strike count, so a miss cannot be applied twice despite unchanged depth.
-- E2 must add action IDs and exactly-once contact application in its state machine. Render presentation must not own outcome logic. Current fixture intentionally resolves against a fresh nail every time; gold dot marks original pre-deformation contact location.
-- State vocabulary includes mode, participant/controller type, pending strike, pause, and TURN_HANDOFF. E3 implements full pass-and-play; no duplicate human input pipeline.
-- Startup state separates readiness, intent, and audio activation. Blocked audio never prevents ready+requested navigation. `MUSIC=null`; loader/cache/audio are contracts only. Implementation remains E4/E6/E7.
-- Initial rules are in the plan: randomized first starter; alternate nails; local rematch swaps first starter; timeout uses minimum focus; cancelled swipe preserves aim/focus; same recipient survives handoff interruption; actor owns penalties.
+- `src/game/duel.ts`: DOM-free single-nail simulation. `tick(seconds)` consumes phase boundaries; a result resolves before the swing and applies once at the .24s contact boundary. Action ID + applied ID and the existing depth/count guard prevent duplicate impacts, including after pause. There are no delayed callbacks to leak into a restarted duel.
+- `src/ui/duelUI.ts`: synchronizes the simulation before pointer actions, captures one pointer, consumes one stage per gesture, rejects short double taps, ignores multitouch, and preserves locked aim/focus on cancelled/invalid swipes. Pause, visibility loss, context loss, resize, and restart clear gesture ownership. Resize pauses instead of reinterpreting an in-progress gesture.
+- Pause freezes the phase clock; resume has an .8s lead-in. Explicit readiness delays input until the .32s camera movement is finished. Operator aim is .85s; impact feedback .7s; straightening .45s.
+- Axis position uses elapsed-time cosine, period 1.8s, range ±1.8 head radii. Reticle makes one 1s inward pass; ideal at 1.5/2.15 seconds, full-focus window ±35ms, then quality falls continuously. Timeout sets zero quality and proceeds without replay.
+- `src/input/swipe.ts`: viewport-normalized distance/velocity and path continuity. Valid downward swipe >=3.5% viewport height; full requested power needs >=25% height and >=1.15 viewport heights/second with a straight path. Weak valid swipes count; upward/tiny/horizontal gestures retry the same swing. Reticle cap still bounds requested power.
+- `src/scene/createScene.ts`: consumes snapshots only. Camera interpolation, .24s accelerating hammer path, 90ms depth/bend presentation, rebound, and straightening cannot alter simulation outcomes. Target view hides the hammer and remains still during timing stages. Circular striking face radius equals .65 nail-head radii, matching the resolver's 1.65 contact envelope. Aim +Y maps to world -Z.
+- Gold/cyan point and moving lines show the selected contact. Operator's sampled aim, quality, and power feed the same resolver; no hidden damage. Its cyan grip distinguishes turns. The human starts this E2 duel; randomized starters/full scoring are E3.
+- Existing E1 formulas and startup/asset/audio contracts remain. `MUSIC=null`. No AI character, SFX, music, final title, or cache implementation has been added early.
 
-## Important files
-- `src/game/{strike,types,tuning,state,random,startup}.ts`
-- `src/scene/createScene.ts`, `src/input/coordinates.ts`
-- `src/assets/contracts.ts`, `src/audio/contracts.ts`
-- `src/dev/{inspector,fixtures}.ts` — dynamically imported only under `import.meta.env.DEV`.
-- `tests/*.test.ts`, `tests/browser-smoke.mjs`; README has exact commands.
-- `docs/NAILZ-BUILD-PLAN.md`, `docs/NAILZ-PROPOSAL.md`, `docs/ASSETS.md`, `docs/EXECUTION-BUDGET.md`.
+## Important files / commands
+- New: `src/game/duel.ts`, `src/input/swipe.ts`, `src/ui/duelUI.ts`, `tests/duel.test.ts`, `tests/duel-browser.mjs`.
+- Extended: scene, app entry, styles, browser fixture test. `README.md` describes controls and tests.
+- `npm run check`: typecheck + unit tests + production build.
+- `npm run test:browser`: E1 fixture regression at `/?lab`.
+- `npm run test:duel-browser`: normal UI input integration with Playwright's controlled clock.
+- Browser install: `npx playwright install chromium`; this environment uses a scratch Chromium via `NAILZ_CHROMIUM_PATH` and its colocated software-rendering libraries.
 
-## Validation
-- `npm run check`: typecheck, 14 tests, and production build passed.
-- Tests cover reachable one-hit plateau, caps, monotonicity, all cardinal/diagonal bends, misses, invalid inputs, immutable source state, depth bounds, duplicate miss application, finish ownership, random stream isolation, two-human initialization, CSS coordinate normalization, and startup intent/readiness independent of audio failure.
-- `npm run test:browser`: passed in headless Chromium with software WebGL, all three views, fixture results, no page errors, and no horizontal overflow at 390×844, 1280×800, 320×568, 844×390.
-- Portrait/target/impact/desktop screenshots visually reviewed. Impact framing pulled back after inspection. Evidence snapshots in `docs/validation/`.
-- Production JS excludes fixture labels/inspector logic; production scene intentionally reports E1 foundation.
-- Build bundle roughly 537 KB JS / 135 KB gzip, plus small CSS/HTML. Vite emits the expected >500 KB chunk warning; splitting/profiling remains E8, not an E1 blocker.
-- This runtime's standard browser archive download failed. Validation used the Chromium binary distributed via @sparticuz/chromium in temporary scratch, not a project dependency. `NAILZ_CHROMIUM_PATH` supports alternate binaries. Normal environments use `npx playwright install chromium`.
-- Physical iPhone/Android touch, Safari, thermal performance, and audio behavior remain untested, not inferred from headless checks.
-
-## Known incomplete work
-- E2–E9 intentionally unimplemented: real tap/reticle/swipe controls, animated camera/contact sequence, AI duel, matches, operator, polished environment/effects, full UI/title, caching/audio, tuning, mobile performance.
-- Current primitive art is an intentional E1 fixture, not the final visual-quality target. Target-view branding contrast and camera composition will change with the E2 gameplay HUD; E4 supplies final art.
-- Initial synchronization was blocked by missing shell credentials and automatic review of default-branch initialization. The user supplied an initialized repository on October 4, 2026; its existing main commit is `64f421962c7cf1780bc9a25aa12d1ce0f2671c65`. E1 is being synchronized using the connected GitHub API on the dedicated feature branch based on that commit. Main is preserved. No deployment, PR, or merge is part of this synchronization.
+## Validation / evidence
+- 23 unit tests pass: E1 invariants plus perfect input sequence, double-tap guard, reticle timeout, freeze/resume/contact uniqueness, operator alternation, frame-rate independence at 30/60/120Hz, restart isolation, and swipe normalization/sampling independence.
+- Production build and typecheck pass; JS is about 552KB / 140KB gzip. Existing large-chunk warning remains for E8 profiling.
+- Browser integration passed with no page errors: normal pointer-controlled one-hit finish, real touch taps, weak mouse swipe, cancelled pointer, timeout, pause/resume, AI returning control, and landscape pause. E1 three-view/resizing tests still pass.
+- Screenshots and a short 10fps gameplay recording in `docs/validation/e2/` document the real UI/camera/swing sequence. Recording uses controlled time; it is visual evidence, not a frame-rate benchmark.
+- Core gate: automated controls prove reachable one-hit finish, weaker swipe response, visible bend/straightening, and a complete duel. **Human phone feel/playtesting remains pending**, as do Safari/Android hardware, thermal performance, and true physical touch-swiping. Do not report emulation as physical-device validation. Get those observations before committing to full art if feel defects appear.
 
 ## Next execution
-Fetch the feature branch and verify a clean working tree, then run **E2 only**, reading its prompt in the stored build plan. Reuse the resolver and coordinate contracts. First implement the explicit Y -> X -> reticle -> ready -> swing -> contact state flow with timestamped one-thumb input and cancellation guards; then camera/hammer timing and a simple seeded alternating opponent. Use the existing fixture cases to verify that the animated contact and bend explain the same result. End with E2's core-play gate and update this note.
+E3 only: reuse `Duel`/input/presentation contracts to add five-nail orchestration, starter policy, score attribution, difficulty inputs, and complete two-human pass-and-play handoffs. Avoid a second copy of the human controls. Update the current single-nail controller with a participant/controller boundary rather than branching physics. Preserve pause/gesture guards and exactly-once application. Read E3 in `docs/NAILZ-BUILD-PLAN.md` and the pass-and-play section before implementation.
+
+## Persistence
+Shell Git has read access but no push credentials. Use connected GitHub Git Data APIs: upload changed blobs/tree, create commit with the verified branch head as parent, update the same ref without force, fetch, compare tree SHA, and align the local branch only after exact content verification. Do not initialize main or merge by default. Preserve the local checkpoint before aligning API-created commit history.

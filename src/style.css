@@ -34,3 +34,23 @@ h1 span { color: #ff7770; }
   #app:has(.inspector) .scene-caption { display: none; }
 }
 @media (max-height: 540px) and (min-width: 601px) { .masthead h1 { font-size: 48px; }.inspector { bottom: 12px; padding: 12px; }.scene-caption { bottom: 12px; } }
+[hidden] { display: none !important; }
+#app { touch-action: none; user-select: none; -webkit-user-select: none; }
+.duel-ui { position:absolute;inset:0;pointer-events:none; }
+.duel-ui button,.duel-ui a { pointer-events:auto; }
+.duel-header { position:absolute;top:max(20px,env(safe-area-inset-top));left:6%;right:6%;display:flex;align-items:center;justify-content:space-between;gap:12px; }
+.wordmark { font-size:32px;font-weight:950;font-style:italic;letter-spacing:-3px;text-shadow:2px 3px #66354a;color:#fff1d9; }
+.wordmark span { color:#ff7770; }.duel-format { font-size:8px;font-weight:700;letter-spacing:.17em;color:#c0b7ca; }
+#pause { border:1px solid #fff3;background:#171728cc;color:#fff1d9;border-radius:50%;width:44px;height:44px;font-size:18px; }
+.turn-badge { position:absolute;top:max(87px,calc(env(safe-area-inset-top) + 68px));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;white-space:nowrap;background:#171728e8;padding:10px 15px;border:1px solid #fff2;border-radius:30px;font-size:10px;font-weight:800;letter-spacing:.13em; }
+.turn-dot { width:5px;height:5px;border-radius:50%;background:#ffbf78; }[data-actor=p2] .turn-dot { background:#53e2e9; }#strike-count { color:#a699af;font-size:8px; }
+.duel-prompt { position:absolute;bottom:max(28px,calc(env(safe-area-inset-bottom) + 16px));left:5%;right:5%;text-align:center;padding:22px 10px 12px;background:linear-gradient(0deg,#111222ee,#111222c7 70%,#11122200);border-radius:20px; }
+#step-label { color:#f4ba77;letter-spacing:.23em;font-size:9px;font-weight:800; }.duel-prompt h2 { font-size:clamp(20px,4.9vw,32px);margin:10px 0 8px;letter-spacing:-.04em; }.duel-prompt p { color:#bfb6cc;font-size:11px;margin:0; }.step-dots { display:flex;justify-content:center;gap:5px;margin-top:16px; }.step-dots i { width:23px;height:3px;background:#fff2;border-radius:3px; }.step-dots .lit { background:#ffc47b; }
+.duel-card { pointer-events:auto;position:absolute;left:50%;bottom:max(40px,calc(env(safe-area-inset-bottom) + 24px));transform:translateX(-50%);width:min(360px,90%);border-radius:22px;padding:25px;background:#191a2cef;border:1px solid #ffffff24;box-shadow:0 15px 70px #0005;text-align:center; }
+.duel-card h2 { font-size:37px;line-height:1.05;letter-spacing:-.06em;margin:14px 0; }.duel-card p { color:#bcb2c9;font-size:13px;line-height:1.6; }.duel-card small { display:block;font-size:9px;color:#b3a8bb;margin-top:16px; }.play-button { width:100%;border:0;border-radius:10px;padding:16px 20px;background:#ffc47b;color:#2b2026;font-weight:800;font-size:15px;display:flex;justify-content:space-between; }.quiet-button { border:0;background:none;color:#ccc2d8;padding:14px;margin-top:7px;font-size:12px; }
+#pause-card { top:50%;bottom:auto;transform:translate(-50%,-50%);box-shadow:0 0 0 100vmax #0c0e1abb; }
+#aim-overlay { position:absolute;overflow:visible;pointer-events:none;filter:drop-shadow(0 1px 2px #1119); }
+.guide { stroke:#fff;stroke-width:.015;opacity:.25; }.goal { fill:none;stroke:#fff8;stroke-width:.02;stroke-dasharray:.06 .035; }.aim-line { stroke:#ffc47b;stroke-width:.035; }#line-x { stroke:#68e0e7; }#hit-dot { fill:#fff8d5; }.focus-ring { fill:none;stroke:#ffc47b;stroke-width:.05; }
+#result-flash { position:absolute;top:33%;left:0;right:0;text-align:center;font-style:italic;font-weight:950;font-size:clamp(25px,7vw,60px);letter-spacing:-.06em;color:#ffe2a6;text-shadow:2px 3px #8f4052;opacity:0;transform:scale(.9);transition:opacity .08s,transform .12s; }#result-flash.visible { opacity:1;transform:scale(1); }
+@media (orientation:landscape) and (max-height:550px) { .duel-header { top:12px; }.turn-badge { top:64px; }.duel-card { left:auto;right:5%;bottom:20px;transform:none;width:280px;padding:16px; }.duel-card h2 { font-size:28px; }.duel-card p { margin:8px 0; }.duel-prompt { bottom:8px;left:25%;right:25%;padding:12px 8px 5px; }.duel-prompt h2 { font-size:20px;margin:5px; }.step-dots { margin-top:8px; }#pause-card { left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%); } }
+@media (prefers-reduced-motion:reduce) { #result-flash { transition:none; } }

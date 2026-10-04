@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { NailState, StrikeResult } from '../game/types.ts';
 import { createNail } from '../game/strike.ts';
+import { DUEL_TIMING, type DuelSnapshot } from '../game/duel.ts';
 
 export type CameraView = 'booth' | 'target' | 'impact';
 export const NAIL_HEAD_RADIUS = 0.115;
@@ -58,6 +59,9 @@ export function createScene(canvas: HTMLCanvasElement) {
   const hammer = new THREE.Group(); scene.add(hammer);
   const hammerHead = makeMesh(new THREE.BoxGeometry(0.42, 0.15, 0.19), metal, hammer);
   hammerHead.position.y = 0;
+  // Only this raised circular striking face contacts the nail: radius .65 heads.
+  const strikingFace = makeMesh(new THREE.CylinderGeometry(NAIL_HEAD_RADIUS * .65, NAIL_HEAD_RADIUS * .65, .06, 24), metal, hammer);
+  strikingFace.position.y = -.105;
   const handle = makeMesh(new THREE.CylinderGeometry(0.046, 0.06, 0.87, 16), wood, hammer); handle.position.y = 0.49;
   const sleeve = makeMesh(new THREE.CylinderGeometry(0.063, 0.068, 0.4, 16), grip, hammer); sleeve.position.y = 0.76;
   const contactMaterial = new THREE.MeshBasicMaterial({ color: '#ffde8a', depthTest: false }); materials.push(contactMaterial);
@@ -65,7 +69,7 @@ export function createScene(canvas: HTMLCanvasElement) {
   let nail = createNail();
   let currentView: CameraView = 'booth';
   let disposed = false;
-  function poseNail(state: NailState) {
+  function poseNail(state: NailState, immediate = true) {
     nail = state;
     const height = Math.max(0, state.length - state.depth);
     const bend = Math.hypot(state.bend.x, state.bend.y);
@@ -83,7 +87,7 @@ export function createScene(canvas: HTMLCanvasElement) {
     head.quaternion.setFromUnitVectors(WORLD_UP, height > 0 ? tangent : WORLD_UP);
     hammer.position.set(0.43, BLOCK_TOP + height + 0.46, 0.05); hammer.rotation.set(0, 0, -0.55);
     marker.visible = false;
-    updateCamera(); render();
+    if (immediate) { updateCamera(); render(); }
   }
   function updateCamera() {
     const h = BLOCK_TOP + Math.max(0, nail.length - nail.depth);
@@ -95,7 +99,7 @@ export function createScene(canvas: HTMLCanvasElement) {
       const portrait = camera.aspect < 0.85;
       if (currentView === 'booth') camera.position.set(portrait ? 3.9 : 3.1, portrait ? 4.5 : 3.6, portrait ? 5.5 : 4.7);
       else camera.position.set(portrait ? 3.1 : 2.5, 3.5, portrait ? 5 : 4.3);
-      camera.lookAt(0, 0.72, 0); hammer.visible = true;
+      camera.lookAt(0, currentView === 'impact' ? 1.3 : 0.72, 0); hammer.visible = true;
     }
     camera.updateProjectionMatrix();
   }
@@ -112,7 +116,77 @@ export function createScene(canvas: HTMLCanvasElement) {
   const lose = (event: Event) => { event.preventDefault(); document.querySelector('#notice')!.textContent = 'Graphics paused. Waiting to restore…'; };
   canvas.addEventListener('webglcontextlost', lose); canvas.addEventListener('webglcontextrestored', restore);
   poseNail(nail); resize();
+  const transitionFrom = new THREE.Vector3();
+  const transitionRotation = new THREE.Quaternion();
+  const destinationPosition = new THREE.Vector3();
+  const destinationRotation = new THREE.Quaternion();
+  let transitionTime = 1;
+  let lastPresentationPhase = '';
+  let lastPresentationActor = '';
+  let rememberedDepth = nail.depth;
+  function present(snapshot: DuelSnapshot, dt: number) {
+    const { phase, elapsed, actor, pending } = snapshot;
+    const inTarget = phase === 'NAIL_SETUP' || phase === 'TARGET_Y' || phase === 'TARGET_X' || phase === 'RETICLE';
+    const requestedView: CameraView = phase === 'MATCH_INTRO' || phase === 'ROUND_RESULT' ? 'booth' : inTarget ? 'target' : 'impact';
+    // Draw impact insertion and bend over 90ms; model already owns the result.
+    let visibleNail = snapshot.nail;
+    if (phase === 'IMPACT_RESOLUTION' && pending) {
+      const progress = Math.min(1, elapsed / .09);
+      visibleNail = { ...snapshot.nail, depth: pending.depthBefore + pending.depthDelta * progress,
+        bend: { x: pending.bend.x * progress, y: pending.bend.y * progress } };
+    } else if (phase === 'NAIL_STRAIGHTEN') {
+      const progress = Math.min(1, elapsed / DUEL_TIMING.straighten);
+      visibleNail = { ...snapshot.nail, bend: { x: snapshot.nail.bend.x * (1-progress), y: snapshot.nail.bend.y * (1-progress) } };
+    }
+    poseNail(visibleNail, false);
+    const changed = requestedView !== currentView || actor !== lastPresentationActor || (phase === 'NAIL_SETUP' && phase !== lastPresentationPhase);
+    if (changed) {
+      transitionFrom.copy(camera.position); transitionRotation.copy(camera.quaternion);
+      currentView = requestedView; updateCamera();
+      destinationPosition.copy(camera.position); destinationRotation.copy(camera.quaternion);
+      camera.position.copy(transitionFrom); camera.quaternion.copy(transitionRotation); transitionTime = 0;
+    }
+    if (transitionTime < 1) {
+      transitionTime = Math.min(1, transitionTime + dt / .32);
+      const t = transitionTime * transitionTime * (3 - 2 * transitionTime);
+      camera.position.lerpVectors(transitionFrom, destinationPosition, t);
+      camera.quaternion.slerpQuaternions(transitionRotation, destinationRotation, t);
+    }
+    const headHeight = BLOCK_TOP + visibleNail.length - visibleNail.depth + .042;
+    grip.color.set(actor === 'p1' ? '#a73343' : '#247e91');
+    hammer.visible = !inTarget;
+    if (phase === 'READY_TO_SWING' || phase === 'SWING' || phase === 'IMPACT_RESOLUTION') {
+      const offset = pending?.offset ?? snapshot.aim;
+      const point = nailLocalToWorld(offset.x, offset.y, headHeight + .135);
+      let lift = .72;
+      let angle = -.55;
+      if (phase === 'SWING') {
+        const t = Math.min(1, elapsed / DUEL_TIMING.contact);
+        lift = .72 * (1 - t * t * t); angle = -.55 * (1 - t);
+        rememberedDepth = snapshot.nail.depth;
+      } else if (phase === 'IMPACT_RESOLUTION') {
+        const bounce = Math.min(1, elapsed / .24);
+        lift = Math.sin(bounce * Math.PI / 2) * (.13 + (pending?.usablePower ?? 0) * .13); angle = -.12 * bounce;
+      }
+      // Head's bottom face reaches the sampled nail-local contact at t=1.
+      hammer.position.copy(point).add(new THREE.Vector3(.35 * lift, lift, 0));
+      hammer.rotation.set(0, 0, angle);
+    }
+    if (actor === 'p2' && phase === 'TARGET_Y') {
+      marker.visible = true;
+      marker.position.copy(nailLocalToWorld(snapshot.aim.x, snapshot.aim.y, headHeight + .008));
+      contactMaterial.color.set('#53e2e9');
+    }
+    if (phase === 'IMPACT_RESOLUTION' && pending?.contact && elapsed < .16) {
+      marker.visible = true;
+      marker.position.copy(nailLocalToWorld(pending.offset.x, pending.offset.y, BLOCK_TOP + visibleNail.length - rememberedDepth + .046));
+      contactMaterial.color.set('#ffde8a');
+    }
+    lastPresentationPhase = phase; lastPresentationActor = actor;
+    render();
+  }
   return {
+    present,
     setNail: poseNail,
     setView(view: CameraView) { currentView = view; updateCamera(); render(); },
     showStrike(result: StrikeResult) {
