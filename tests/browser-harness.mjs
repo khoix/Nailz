@@ -21,7 +21,7 @@ export async function runScenario(name, port, scenario) {
  try {
   browser=await chromium.launch({channel:process.env.NAILZ_CHROMIUM_PATH?undefined:'chromium',executablePath:process.env.NAILZ_CHROMIUM_PATH||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   browserVersion=browser.version();console.log(`Browser ${browserVersion}; ${process.env.NAILZ_CHROMIUM_PATH?'custom executable':'chromium'}; headless`);
-  context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:Number(process.env.NAILZ_BROWSER_DPR||1),hasTouch:true});
+  context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:Number(process.env.NAILZ_BROWSER_DPR||1),hasTouch:true,...(process.env.NAILZ_RECORD_VIDEO==='1'?{recordVideo:{dir:artifactDir,size:{width:390,height:844}}}:{})});
   // Avoid a continuous screencast competing with explicit WebGL captures while the game clock is paused.
   await context.tracing.start({screenshots:false,snapshots:true,sources:true});page=await context.newPage();page.setDefaultTimeout(20000);
   page.on('pageerror',e=>errors.push(`page: ${e.message}`));
@@ -38,6 +38,7 @@ export async function runScenario(name, port, scenario) {
  } finally {
   await writeFile(`${artifactDir}/result.json`,JSON.stringify({name,browserVersion,browserChannel:process.env.NAILZ_CHROMIUM_PATH?'custom executable':'chromium',deviceScaleFactor:Number(process.env.NAILZ_BROWSER_DPR||1),target:production?'production dist':'development',status:failure?'failed':'passed',elapsedMs:Date.now()-started,errors,failure:failure?.stack??null},null,2));
   await context?.tracing.stop({path:`${artifactDir}/trace.zip`}).catch(()=>{});
+  await context?.close();
   await browser?.close();
   if(production)await new Promise((resolve,reject)=>server.httpServer.close(error=>error?reject(error):resolve()));else await server.close();
  }

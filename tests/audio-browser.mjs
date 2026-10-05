@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import {runScenario,captureScreenshot} from './browser-harness.mjs';
 await runScenario('audio-settings',5184,async({page,url,artifactDir})=>{
- await page.addInitScript(()=>{const Native=window.AudioContext;window.audioContexts=0;window.AudioContext=class extends Native{constructor(...args){super(...args);window.audioContexts++;}};});
+ await page.addInitScript(()=>{const Native=window.AudioContext;window.audioContexts=0;window.AudioContext=class extends Native{constructor(...args){super(...args);window.audioContexts++;window.audioContext=this;}};});
  const musicRequests=[];page.on('request',r=>{if(/\.(mp3|ogg|wav)(\?|$)/.test(r.url()))musicRequests.push(r.url());});
  await page.goto(url);await page.locator('#begin').waitFor();assert.equal(await page.evaluate(()=>window.audioContexts),0,'No context before user intent');
  await page.locator('#sound').click();await page.locator('#sound').click();assert.equal(await page.evaluate(()=>window.audioContexts),1,'One shared context across gestures');
  await page.locator('#begin').click();await page.locator('#pause').click();
+ await page.waitForFunction(()=>window.audioContext.state==='suspended');
+ for(let i=0;i<6;i++)await page.locator('#sound').click();
+ await page.waitForFunction(()=>window.audioContext.state==='suspended');
+ assert.equal(await page.evaluate(()=>window.audioContexts),1,'Paused settings reuse the suspended context');
  await page.locator('#motion-setting').check();await page.locator('#haptics-setting').check();
  await page.locator('#effects-volume').focus();await page.keyboard.press('Home');await page.keyboard.press('ArrowRight');
  await page.locator('#sound').click();await captureScreenshot(page,`${artifactDir}/settings.png`);
