@@ -6,7 +6,7 @@ All game art in E4 is original code-authored geometry or SVG artwork created for
 |---|---|---|---|
 | End grain, cracks, old dents | `public/assets/endgrain.svg` | Original authored SVG | Deterministic rings and scars; 512×512 color texture, 83,237 bytes |
 | Marquee face | `public/assets/marquee.svg` | Original authored SVG | 1024×384 lettering and rules, 853 bytes; system sans-serif resolves locally |
-| Sculpted log, hammer, nail | `src/scene/createScene.ts` | Original procedural meshes | Lathed/bevelled profiles, wrapped grip, collars, bands and rivets; gameplay pivots preserved |
+| Sculpted log, hammer, nail | `src/scene/createScene.ts`, `src/scene/hammer.ts` | Original procedural meshes | Lathed/bevelled profiles, wrapped grip, collars, bands and rivets; hammer contacts with its head end and transverse handle |
 | Booth, canopy, bears, wheel, festival | `src/scene/environment.ts` | Original procedural meshes | Batched static meshes; independently swaying prize pivots; instanced bulbs |
 | Reflection environment / rounded mesh utilities | Three.js pinned npm dependency | Three.js MIT license in `node_modules/three/LICENSE` | RoomEnvironment produces an in-memory PMREM; no fetched environment map |
 | Favicon | `public/favicon.svg` | Original authored SVG from CI repair | N! mark |
@@ -25,7 +25,7 @@ Geometry/material/shadow/environment resources are owned and disposed by the sce
 
 High (default): sRGB color maps/output, ACES exposure .95, one 1024² shadow map, warm key 3.2, cool hemisphere 1.1, cyan rim 2.2, PMREM intensity .45, DPR capped at 1.75. No fullscreen bloom or postprocessing. Low (`?quality=low`, or scene API): DPR capped at 1, dynamic shadows and distant scenery disabled; hero geometry and aiming coordinates unchanged. A later settings UI can call `setQuality()`.
 
-Static scenery merges by material and bulbs instance together. Prize motion honors reduced motion and paused simulation time. The fixed top-down targeting camera and nail-local radius .115 remain unchanged; the booth camera now frames the marquee and hero together. The raised hammer contact face retains its original radius, offset and timing.
+Static scenery merges by material and bulbs instance together. Prize motion honors reduced motion and paused simulation time. The fixed top-down targeting camera and nail-local radius .115 remain unchanged; the booth camera now frames the marquee and hero together. The hammer's contact face retains its original radius and gameplay timing. Its mesh-end offset is transformed with the swing so the downward head end reaches the sampled contact while the handle extends back toward the wielder.
 
 Measured development captures and CPU submission profile are in `docs/validation/e4/`. CPU timing in software-rendered Chromium is not a phone GPU/frame-rate claim. E8 must measure real iPhone/Android performance and tune tiers.
 
