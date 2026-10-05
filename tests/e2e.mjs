@@ -6,6 +6,8 @@ const scenarios=[
  {name:'solo-controls',script:'tests/duel-browser.mjs',args:[]},
  {name:'local-matches',script:'tests/match-browser.mjs',args:[]},
  ...['easy','normal','hard','champion'].map(difficulty=>({name:`solo-${difficulty}`,script:'tests/solo-matches-browser.mjs',args:[difficulty]})),
+ ...['normal','muted','low'].map(mode=>({name:`visual-${mode}`,script:'tests/e6-visual-browser.mjs',args:[mode],env:{NAILZ_RECORD_VIDEO:'1'}})),
+ {name:'resource-soak',script:'tests/resource-soak-browser.mjs',args:[]},
 ];
 const requested=process.argv.slice(2);
 if(requested.length>1||requested.length===1&&!scenarios.some(({name})=>name===requested[0])) {
@@ -13,12 +15,12 @@ if(requested.length>1||requested.length===1&&!scenarios.some(({name})=>name===re
 }
 const selected=requested.length?scenarios.filter(({name})=>name===requested[0]):scenarios;
 const results=[];await mkdir('artifacts/e2e',{recursive:true});
-for(const {name,script,args} of selected) {
+for(const {name,script,args,env={}} of selected) {
  const start=Date.now();
  console.log(`${new Date().toISOString()} START ${name}`);
  const outcome=await new Promise(resolve=>{
   let timedOut=false,killTimer;
-  const child=spawn(process.execPath,[script,...args],{stdio:'inherit',env:{...process.env,NAILZ_E2E:'1'}});
+  const child=spawn(process.execPath,[script,...args],{stdio:'inherit',env:{...process.env,NAILZ_E2E:'1',...env}});
   const timeout=setTimeout(()=>{
    timedOut=true;console.error(`TIMEOUT ${name}: exceeded the 10-minute scenario budget`);
    child.kill('SIGTERM');killTimer=setTimeout(()=>child.kill('SIGKILL'),5000);

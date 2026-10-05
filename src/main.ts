@@ -37,6 +37,12 @@ async function start(){
   }else{
    document.querySelector('.masthead')?.remove();document.querySelector('.scene-caption')?.remove();cleanup=mountDuel(scene,audio);
   }
+  if(new URLSearchParams(location.search).has('qa')) {
+    (globalThis as typeof globalThis & {__NAILZ_QA__?:unknown}).__NAILZ_QA__={
+      scene:()=>scene?.metrics()??null,
+      audio:()=>audio.diagnostics(),
+    };
+  }
   app.dataset.loading='ready';loading.remove();
  }catch(error){
   console.warn("Booth preparation failed",error);
@@ -45,4 +51,4 @@ async function start(){
  }finally{busy=false;}
 }
 loading.querySelector('button')!.addEventListener('click',start);void start();
-import.meta.hot?.dispose(()=>{disposed=true;abort.abort();cleanup?.();scene?.dispose();textures.forEach(t=>t.dispose());audio.dispose();loader.dispose();loading.remove();});
+import.meta.hot?.dispose(()=>{disposed=true;abort.abort();cleanup?.();scene?.dispose();textures.forEach(t=>t.dispose());audio.dispose();loader.dispose();Reflect.deleteProperty(globalThis,'__NAILZ_QA__');loading.remove();});

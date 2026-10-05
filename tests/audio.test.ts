@@ -94,3 +94,27 @@ test('overlapping impact effects obey the voice cap and release for the next con
   assert.ok(context.nodes.filter(n=>n.starts&&!n.disconnected).length>1,'new effects can play after cleanup');
  }finally{Node.finishImmediately=true;audio?.dispose();if(oldContext)Object.defineProperty(globalThis,'AudioContext',oldContext);else Reflect.deleteProperty(globalThis,'AudioContext');if(oldDocument)Object.defineProperty(globalThis,'document',oldDocument);else Reflect.deleteProperty(globalThis,'document');}
 });
+
+
+test('haptics are capability-detected, opt-in, and tied to resolved contacts',async()=>{
+ const oldContext=Object.getOwnPropertyDescriptor(globalThis,'AudioContext'),oldDocument=Object.getOwnPropertyDescriptor(globalThis,'document'),oldNavigator=Object.getOwnPropertyDescriptor(globalThis,'navigator');
+ const vibrations:unknown[]=[];
+ Object.defineProperty(globalThis,'AudioContext',{value:Context,configurable:true});
+ Object.defineProperty(globalThis,'document',{value:{hidden:false},configurable:true});
+ Object.defineProperty(globalThis,'navigator',{value:{vibrate:(pattern:unknown)=>{vibrations.push(pattern);return true;}},configurable:true});
+ let audio:ReturnType<typeof createAudio>|undefined;
+ try{
+  audio=createAudio({} as Preloader,null);audio.activate();await settle();audio.update({haptics:true});
+  const hit=resolveStrike(createNail(),{actor:'p1',offset:{x:0,y:0},swipePower:1,reticleQuality:1});
+  audio.observe({...snapshot,phase:'IMPACT_RESOLUTION',actionId:1,appliedActionId:1,lastResult:hit});
+  assert.deepEqual(vibrations,[[20,25,35]]);
+  audio.update({haptics:false});
+  audio.observe({...snapshot,phase:'IMPACT_RESOLUTION',actionId:2,appliedActionId:2,lastResult:hit});
+  assert.equal(vibrations.length,1,'disabled haptics must not vibrate');
+ }finally{
+  audio?.dispose();
+  if(oldContext)Object.defineProperty(globalThis,'AudioContext',oldContext);else Reflect.deleteProperty(globalThis,'AudioContext');
+  if(oldDocument)Object.defineProperty(globalThis,'document',oldDocument);else Reflect.deleteProperty(globalThis,'document');
+  if(oldNavigator)Object.defineProperty(globalThis,'navigator',oldNavigator);else Reflect.deleteProperty(globalThis,'navigator');
+ }
+});

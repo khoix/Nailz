@@ -69,6 +69,6 @@ export function createAudio(loader:Preloader, music:MusicConfig|null=MUSIC) {
   }
  }
  function update(next:Partial<AudioSettings>){Object.assign(settings,next);try{storage?.setItem('nailz-settings-v1',JSON.stringify(settings));}catch{}gains();}
- return {settings,activate,observe,update,dispose(){if(disposed)return;disposed=true;for(const voice of voices)try{voice.stop();}catch{}try{source?.stop();}catch{}source?.disconnect();try{ambience?.stop();}catch{}ambience?.disconnect();ambienceFilter?.disconnect();ambienceGain?.disconnect();source=undefined;ambience=undefined;ambienceFilter=undefined;ambienceGain=undefined;voices.clear();buffer=undefined;fx?.disconnect();musicGain?.disconnect();void context?.close().catch(()=>{});},get state(){return context?.state??'locked';}};
+ return {settings,activate,observe,update,diagnostics(){return {state:context?.state??'locked',voices:voices.size,ambience:Boolean(ambience),music:Boolean(source),musicBuffered:Boolean(buffer),loading:Boolean(loading),disposed};},dispose(){if(disposed)return;disposed=true;for(const voice of voices)try{voice.stop();}catch{}try{source?.stop();}catch{}source?.disconnect();try{ambience?.stop();}catch{}ambience?.disconnect();ambienceFilter?.disconnect();ambienceGain?.disconnect();source=undefined;ambience=undefined;ambienceFilter=undefined;ambienceGain=undefined;voices.clear();buffer=undefined;fx?.disconnect();musicGain?.disconnect();void context?.close().catch(()=>{});},get state(){return context?.state??'locked';}};
 }
 export type GameAudio=ReturnType<typeof createAudio>;
