@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
-import { runScenario, captureScreenshot } from './browser-harness.mjs';
+import { runScenario, captureScreenshot, enterGame } from './browser-harness.mjs';
 
 const difficulties=['easy','normal','hard','champion'];
 const requested=process.argv.slice(2);
 assert.ok(requested.length<=1&&requested.every(difficulty=>difficulties.includes(difficulty)),'Expected one of: easy, normal, hard, champion');
 for(const difficulty of requested.length?requested:difficulties) {
  await runScenario(`solo-${difficulty}`,5177,async({page,artifactDir,url})=>{
-  await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));await page.goto(url);await page.locator('#begin').waitFor();
+  await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));await page.goto(url);await enterGame(page);
   // Fix the clock/seed, not the game state. All actions use the visible UI.
   await page.clock.setFixedTime(new Date(11));await page.selectOption('#difficulty',difficulty);await page.locator('#begin').click();
   const phase=()=>page.locator('#app').getAttribute('data-phase');

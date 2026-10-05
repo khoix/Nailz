@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
-import {runScenario,captureScreenshot} from './browser-harness.mjs';
+import {runScenario,captureScreenshot,enterGame} from './browser-harness.mjs';
 // Optional recording: NAILZ_RECORD_VIDEO=1. Uses the public pointer flow only.
 const mode=process.argv[2]??'normal';
 if(!['normal','muted','low'].includes(mode))throw Error('Expected normal, muted or low');
 await runScenario(`impact-motion-${mode}`,5188,async({page,url,artifactDir})=>{
  await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});
  await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));
- await page.goto(url+(mode==='low'?'/?quality=low':''));await page.locator('#begin').waitFor();
+ await page.goto(url+(mode==='low'?'/?quality=low':''));await enterGame(page);
  if(mode==='muted')await page.locator('#sound').click();
  await page.clock.setFixedTime(new Date(11));await page.locator('#begin').click();
  await page.clock.runFor(850);await page.mouse.click(300,600);

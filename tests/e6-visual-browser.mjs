@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {runScenario,captureScreenshot} from './browser-harness.mjs';
+import {runScenario,captureScreenshot,enterGame} from './browser-harness.mjs';
 
 const mode=process.argv[2]??'normal';
 assert.ok(['normal','muted','low'].includes(mode),'Expected normal, muted, or low');
@@ -14,7 +14,7 @@ await runScenario(`visual-${mode}`,port,async({page,url,artifactDir})=>{
 
  async function fresh(label){
   await page.goto(target);
-  await page.locator('#begin').waitFor();
+  await enterGame(page);
   const sound=await page.locator('#sound').textContent();
   if(mode==='muted'&&sound!=='Sound off')await page.locator('#sound').click();
   assert.equal(await page.locator('#sound').textContent(),mode==='muted'?'Sound off':'Sound on');

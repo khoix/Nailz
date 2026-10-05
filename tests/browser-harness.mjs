@@ -43,3 +43,11 @@ export async function runScenario(name, port, scenario) {
   if(production)await new Promise((resolve,reject)=>server.httpServer.close(error=>error?reject(error):resolve()));else await server.close();
  }
 }
+
+/** Enter through the real user-gesture title gate. */
+export async function enterGame(page) {
+ const play=page.locator('#tap-to-play');
+ await play.waitFor();
+ await play.click();
+ await page.locator('#begin').waitFor();
+}
