@@ -13,24 +13,24 @@ export function mountResourceSoak(scene:NailzScene,audio:GameAudio):()=>void {
  let cancelled=false,running=false;
  async function run(){
   if(running)return;running=true;button.disabled=true;output.dataset.status='running';
-  const samples:Array<{match:number;scene:ReturnType<NailzScene['metrics']>;audio:ReturnType<GameAudio['diagnostics']>}>=[],first:{geometries:number;textures:number}|undefined;
+  const samples:Array<{match:number;scene:ReturnType<NailzScene['metrics']>;audio:ReturnType<GameAudio['diagnostics']>}>=[];let first:{geometries:number;textures:number}|undefined;
   try{
    for(let match=1;match<=10&&!cancelled;match++){
     const game=new Duel(7000+match,{mode:'pass-and-play',firstStarter:'p1'});
-    audio.observe(game.snapshot);scene.present(game.snapshot,0);game.start();
+    const phase=()=>String(game.snapshot.phase);audio.observe(game.snapshot);scene.present(game.snapshot,0);game.start();
     for(let round=1;round<=5;round++){
      game.tick(DUEL_TIMING.setup);
-     if(game.snapshot.phase!=='TURN_HANDOFF'||!game.ready())throw Error(`Match ${match} nail ${round}: handoff failed`);
+     if(phase()!=='TURN_HANDOFF'||!game.ready())throw Error(`Match ${match} nail ${round}: handoff failed`);
      game.tick(DUEL_TIMING.setup);game.tick(.45);game.tap();game.tick(.45);game.tap();game.tick(FOCUS_TIME);game.tap();game.tick(DUEL_TIMING.ready);
      if(!game.swing(1))throw Error(`Match ${match} nail ${round}: swing failed`);
      audio.observe(game.snapshot);scene.present(game.snapshot,.016);
      game.tick(DUEL_TIMING.contact);audio.observe(game.snapshot);scene.present(game.snapshot,.016);
      game.tick(.12);audio.observe(game.snapshot);scene.present(game.snapshot,.12);
      game.tick(DUEL_TIMING.impact-.12);audio.observe(game.snapshot);scene.present(game.snapshot,.016);
-     if(game.snapshot.phase!=='ROUND_RESULT')throw Error(`Match ${match} nail ${round}: round did not finish`);
+     if(phase()!=='ROUND_RESULT')throw Error(`Match ${match} nail ${round}: round did not finish`);
      game.advanceRound();
     }
-    if(game.snapshot.phase!=='MATCH_RESULT')throw Error(`Match ${match}: match did not finish`);
+    if(phase()!=='MATCH_RESULT')throw Error(`Match ${match}: match did not finish`);
     audio.observe(game.snapshot);scene.present(game.snapshot,.1);
     await wait(450);
     const sceneMetrics=scene.metrics(),audioMetrics=audio.diagnostics();
