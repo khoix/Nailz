@@ -1,0 +1,11 @@
+{
+  "name": "impact-motion-normal",
+  "browserVersion": "153.0.8010.0",
+  "browserChannel": "custom executable",
+  "deviceScaleFactor": 0.5,
+  "target": "production dist",
+  "status": "passed",
+  "elapsedMs": 38640,
+  "errors": [],
+  "failure": null
+}

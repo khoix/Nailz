@@ -73,3 +73,9 @@ h1 span { color: #ff7770; }
 .duel-format { color:#f4e5d0;text-shadow:0 1px 3px #000,0 0 7px #000; }
 .wordmark { text-shadow:2px 3px #66354a,0 0 9px #0b1324; }
 @media (orientation:landscape) and (max-height:550px) { .depth-meter { top:144px; } }
+
+#sound { pointer-events:auto;font:600 10px system-ui;color:#ffe2ae;background:#172135;border:1px solid #ffe2ae55;border-radius:18px;padding:8px; }
+.audio-settings { border:1px solid #ffffff25;border-radius:12px;text-align:left;margin:12px 0;font-size:12px; }.audio-settings label { display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0; }.audio-settings input[type=range] { width:130px;accent-color:#ffc47b; }
+.score-celebrate { color:#ffe58b;box-shadow:0 0 20px #ffbf4c70; }
+#pause-card { max-height:85svh;overflow:auto; }
+@media(prefers-reduced-motion:reduce){.score-celebrate { box-shadow:none; }}

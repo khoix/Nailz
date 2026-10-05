@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scenario: [asset-loading, solo-controls, local-matches, solo-easy, solo-normal, solo-hard, solo-champion]
+        scenario: [audio-settings, asset-loading, solo-controls, local-matches, solo-easy, solo-normal, solo-hard, solo-champion, visual-normal, visual-muted, visual-low, resource-soak]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

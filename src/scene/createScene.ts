@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildEnvironment } from './environment.ts';
+import { createImpactEffects } from '../effects/impact.ts';
+import { impactStyle } from '../effects/events.ts';
 import { createOperator } from './operator.ts';
 import { hammerMotion } from './animation.ts';
 import { createHammer, poseHammer, HAMMER_FACE, HAMMER_GRIP, HAMMER_GRIP_ROTATION } from './hammer.ts';
@@ -32,6 +34,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
   room.dispose(); pmrem.dispose();
   const environment = buildEnvironment(scene, textures);
   const operator = createOperator(scene);
+  const effects=createImpactEffects(scene);let reducedMotion=false;const cameraImpulse=new THREE.Vector3();
   let quality: 'low' | 'high' = new URLSearchParams(location.search).get('quality') === 'low' ? 'low' : 'high';
   const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 40);
   const materials: THREE.Material[] = [];
@@ -55,18 +58,19 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
   key.shadow.mapSize.set(1024, 1024); key.shadow.camera.left = -4; key.shadow.camera.right = 4;
   key.shadow.camera.top = 4; key.shadow.camera.bottom = -4; key.shadow.normalBias = 0.025; scene.add(key);
   const rim = new THREE.DirectionalLight('#75c7e3', 2.2); rim.position.set(3, 3, -4); scene.add(rim);
-  const base = makeMesh(new THREE.CylinderGeometry(1.8, 1.94, 0.18, 64), plinth); base.position.y = -0.09;
+  const blockRoot=new THREE.Group();scene.add(blockRoot);
+  const base = makeMesh(new THREE.CylinderGeometry(1.8, 1.94, 0.18, 64), plinth, blockRoot); base.position.y = -0.09;
   const logProfile = [[1.23,0],[1.29,.04],[1.31,.1],[1.28,.56],[1.24,.67],[1.20,.7]].map(([r,y])=>new THREE.Vector2(r,y));
-  makeMesh(new THREE.LatheGeometry(logProfile,64),wood);
+  makeMesh(new THREE.LatheGeometry(logProfile,64),wood,blockRoot);
   // Small repeated surface details share draw calls and do not cast tiny costly shadows.
   function instances(geometry:THREE.BufferGeometry,material:THREE.Material,count:number,parent:THREE.Object3D,pose:(o:THREE.Object3D,i:number)=>void){
     geometries.push(geometry);const mesh=new THREE.InstancedMesh(geometry,material,count);mesh.receiveShadow=true;parent.add(mesh);
     const o=new THREE.Object3D();for(let i=0;i<count;i++){pose(o,i);o.updateMatrix();mesh.setMatrixAt(i,o.matrix);}return mesh;
   }
-  instances(new THREE.CylinderGeometry(.006,.014,.52,5),darkWood,40,scene,(ridge,i)=>{const a=i*Math.PI*2/40;ridge.position.set(Math.cos(a)*1.29,.3,Math.sin(a)*1.29);ridge.rotation.z=Math.sin(i)*.035;});
-  const top = makeMesh(new THREE.CylinderGeometry(1.225, 1.225, 0.016, 64), endGrain); top.position.y = BLOCK_TOP - 0.004;
-  for(const y of [.13,.49]) {const band = makeMesh(new THREE.CylinderGeometry(1.309, 1.309, .047, 64, 1, true), plinth); band.position.y=y;}
-  instances(new THREE.SphereGeometry(.023,8,6),brass,12,scene,(rivet,i)=>{const a=i*Math.PI/6;rivet.position.set(Math.cos(a)*1.32,.13,Math.sin(a)*1.32);});
+  instances(new THREE.CylinderGeometry(.006,.014,.52,5),darkWood,40,blockRoot,(ridge,i)=>{const a=i*Math.PI*2/40;ridge.position.set(Math.cos(a)*1.29,.3,Math.sin(a)*1.29);ridge.rotation.z=Math.sin(i)*.035;});
+  const top = makeMesh(new THREE.CylinderGeometry(1.225, 1.225, 0.016, 64), endGrain,blockRoot); top.position.y = BLOCK_TOP - 0.004;
+  for(const y of [.13,.49]) {const band = makeMesh(new THREE.CylinderGeometry(1.309, 1.309, .047, 64, 1, true), plinth,blockRoot); band.position.y=y;}
+  instances(new THREE.SphereGeometry(.023,8,6),brass,12,blockRoot,(rivet,i)=>{const a=i*Math.PI/6;rivet.position.set(Math.cos(a)*1.32,.13,Math.sin(a)*1.32);});
   const floor = makeMesh(new THREE.PlaneGeometry(80, 80), mat('#171725', 0.92)); floor.rotation.x = -Math.PI / 2; floor.position.y = -1.36;
   const nailGroup = new THREE.Group(); scene.add(nailGroup);
   const shaftGeometry = new THREE.CylinderGeometry(0.027, 0.027, 1, 12); geometries.push(shaftGeometry);
@@ -115,7 +119,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     }
     camera.updateProjectionMatrix();
   }
-  function render() { if (!disposed) renderer.render(scene, camera); }
+  function render() { if (!disposed) {camera.position.add(cameraImpulse);renderer.render(scene, camera);camera.position.sub(cameraImpulse);} }
   function resize() {
     const rect = canvas.getBoundingClientRect();
     const width = Math.max(1, rect.width); const height = Math.max(1, rect.height);
@@ -148,7 +152,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     // Draw impact insertion and bend over 90ms; model already owns the result.
     let visibleNail = snapshot.nail;
     if (phase === 'IMPACT_RESOLUTION' && pending) {
-      const progress = Math.min(1, elapsed / .09);
+      const progress = Math.min(1, Math.max(0,elapsed-impactStyle(pending).hold) / .09);
       visibleNail = { ...snapshot.nail, depth: pending.depthBefore + pending.depthDelta * progress,
         bend: { x: pending.bend.x * progress, y: pending.bend.y * progress } };
     } else if (phase === 'NAIL_STRAIGHTEN') {
@@ -165,6 +169,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     }
     if (transitionTime < 1) {
       transitionTime = Math.min(1, transitionTime + dt / .32);
+      if(reducedMotion||matchMedia('(prefers-reduced-motion: reduce)').matches)transitionTime=1;
       const t = transitionTime * transitionTime * (3 - 2 * transitionTime);
       camera.position.lerpVectors(transitionFrom, destinationPosition, t);
       camera.quaternion.slerpQuaternions(transitionRotation, destinationRotation, t);
@@ -175,7 +180,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     if (phase === 'READY_TO_SWING' || phase === 'SWING' || phase === 'IMPACT_RESOLUTION') {
       const offset = pending?.offset ?? snapshot.aim;
       const point = nailLocalToWorld(offset.x, offset.y, headHeight);
-      const {lift,angle}=hammerMotion(snapshot);
+      const {lift,angle}=hammerMotion(phase==='IMPACT_RESOLUTION'&&pending?{...snapshot,elapsed:Math.max(0,elapsed-impactStyle(pending).hold)}:snapshot);
       if(phase==='SWING')rememberedDepth=snapshot.nail.depth;
       poseHammer(hammer, point, lift, angle, snapshot.isHuman);
     }
@@ -194,6 +199,10 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     hammer.getWorldQuaternion(gripRotation).multiply(HAMMER_GRIP_ROTATION);
     operator.setVisible(!inTarget || phase==='NAIL_SETUP');
     operator.update(snapshot,dt,gripPoint,gripRotation,head.position);
+    const reduced=reducedMotion||matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const effectOrigin=nailLocalToWorld(snapshot.lastResult?.offset.x??0,snapshot.lastResult?.offset.y??0,BLOCK_TOP+snapshot.nail.length-(snapshot.lastResult?.depthBefore??snapshot.nail.depth)+.042);
+    blockRoot.position.y=!reduced&&phase==='IMPACT_RESOLUTION'&&pending?.contact?-.025*impactStyle(pending).intensity*Math.sin(Math.min(1,elapsed/.2)*Math.PI):0;
+    cameraImpulse.copy(effects.update(snapshot,dt,effectOrigin,hammer.localToWorld(HAMMER_FACE.clone()),quality==='low',reduced));
     const staticTarget=inTarget&&phase!=='NAIL_SETUP'&&cameraWasSettled&&transitionTime===1&&!changed&&phase===lastPresentationPhase&&previousNailDepth===snapshot.nail.depth;
     const stillPaused=snapshot.paused&&wasPaused;
     const ambient=['MATCH_INTRO','TURN_HANDOFF','ROUND_RESULT','MATCH_RESULT'].includes(phase);
@@ -205,6 +214,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
   }
   return {
     present,
+    setReducedMotion(value:boolean){reducedMotion=value;},
     async prepare() {
       for (const view of ['booth','target','impact'] as CameraView[]) {
         currentView=view;updateCamera();renderer.compile(scene,camera);render();
@@ -239,7 +249,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
       disposed = true; observer.disconnect();
       canvas.removeEventListener('webglcontextlost', lose); canvas.removeEventListener('webglcontextrestored', restore);
       geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose());
-      hammerModel.dispose(); operator.dispose(); environment.dispose(); environmentMap.dispose(); key.shadow.dispose(); renderer.dispose();
+      effects.dispose(); hammerModel.dispose(); operator.dispose(); environment.dispose(); environmentMap.dispose(); key.shadow.dispose(); renderer.dispose();
     },
   };
 }
