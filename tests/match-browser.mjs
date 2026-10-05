@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { runScenario, captureScreenshot, enterGame } from './browser-harness.mjs';
 await runScenario('local-matches',5176,async ({page,errors,artifactDir,url})=>{
  await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));await page.goto(url);await enterGame(page);
- await page.clock.setFixedTime(new Date(11));await page.selectOption('#mode','pass-and-play');assert.equal(await page.locator('#difficulty').isVisible(),false);
+ await page.clock.setFixedTime(new Date(11));await page.selectOption('#mode','pass-and-play');assert.equal(await page.locator('#difficulty').isVisible(),false);assert.equal(await page.locator('#name-controls').isVisible(),true,'Local mode offers optional names');
  await page.locator('#begin').click();await page.clock.runFor(450);
  const phase=()=>page.locator('#app').getAttribute('data-phase');const actor=()=>page.locator('#app').getAttribute('data-actor');
  assert.equal(await phase(),'TURN_HANDOFF');assert.equal(await actor(),'p1');await page.clock.runFor(5000);assert.equal(await phase(),'TURN_HANDOFF');
@@ -42,7 +42,7 @@ await runScenario('local-matches',5176,async ({page,errors,artifactDir,url})=>{
  await page.locator('#begin').click();await page.clock.runFor(450);assert.equal(await actor(),'p2');assert.equal(await phase(),'TURN_HANDOFF');assert.match(await page.locator('#match-score').textContent(),/0 — 0/);
  // Finish the rematch to exercise mode changes only at match boundaries.
  for(let round=1;round<=5;round++){await strike();await page.locator('#begin').click();await page.clock.runFor(450);console.log(`${new Date().toISOString()} local-matches: rematch nail ${round}/5 complete`);}
- await page.locator('#choose-mode').click();assert.equal(await phase(),'MATCH_INTRO');await page.selectOption('#mode','solo');assert.equal(await page.locator('#difficulty').isVisible(),true);
+ await page.locator('#choose-mode').click();assert.equal(await phase(),'MATCH_INTRO');await page.selectOption('#mode','solo');assert.equal(await page.locator('#difficulty').isVisible(),true);assert.equal(await page.locator('#name-controls').isVisible(),false,'Solo hides local name inputs');
  await page.selectOption('#difficulty','champion');await page.locator('#begin').click();await page.clock.runFor(450);assert.notEqual(await phase(),'TURN_HANDOFF');assert.match(await page.locator('#match-score').textContent(),/Player.*0 — 0.*Operator/);
  assert.deepEqual(errors,[]);console.log(JSON.stringify({status:'passed',localMatches:2,allFiveNails:true,freshTouch:true,cancel:true,pause:true,background:true,rotation:true,samePersonReady:true,rematchSwap:true,modeChange:true,errors}));
 });

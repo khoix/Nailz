@@ -120,3 +120,4 @@ h1 span { color: #ff7770; }
 /* Glow only: no layout/transform change, so the button stays stable for taps and automation. */
 @keyframes prompt-pulse { 0%,100% { box-shadow:0 0 0 1px #ffd89b28,0 10px 32px #ff9c6650; } 50% { box-shadow:0 0 0 3px #ffd89b66,0 14px 44px #ff9c66a0; } }
 @media (prefers-reduced-motion:reduce) { .title-screen::before,.title-play { animation:none; } }
+.name-controls { display:grid;gap:6px;margin:8px 0; }.name-controls label small { color:#9a90a8;font-weight:500; }.name-controls input { width:100%;box-sizing:border-box;border:1px solid #ffffff2a;border-radius:8px;padding:10px 12px;background:#0f1324;color:#fff1d9;font:inherit;font-size:14px; }
