@@ -15,9 +15,10 @@ await runScenario(`visual-${mode}`,port,async({page,url,artifactDir})=>{
  async function fresh(label){
   await page.goto(target);
   await enterGame(page);
-  const sound=await page.locator('#sound').textContent();
-  if(mode==='muted'&&sound!=='Sound off')await page.locator('#sound').click();
-  assert.equal(await page.locator('#sound').textContent(),mode==='muted'?'Sound off':'Sound on');
+  const sound=page.locator('#sound');
+  if(mode==='muted'&&(await sound.getAttribute('data-muted'))!=='true')await sound.click();
+  assert.equal(await sound.getAttribute('data-muted'),mode==='muted'?'true':'false');
+  assert.equal(await sound.getAttribute('aria-label'),mode==='muted'?'Unmute sound':'Mute sound');
   await page.clock.setFixedTime(new Date(11));
   if(label==='perfect')await captureScreenshot(page,`${artifactDir}/booth.png`);
   await page.locator('#begin').click();
