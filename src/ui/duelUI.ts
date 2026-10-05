@@ -1,17 +1,18 @@
 import { Duel, axisPosition, reticleRadius, DUEL_TIMING } from '../game/duel.ts';
 import type { Difficulty, GameMode } from '../game/types.ts';
 import { measureSwipe, type GesturePoint } from '../input/swipe.ts';
+import type { GameAudio } from '../audio/controller.ts';
 import type { NailzScene } from '../scene/createScene.ts';
-export function mountDuel(scene: NailzScene): () => void {
+export function mountDuel(scene: NailzScene, audio:GameAudio): () => void {
   const app = document.querySelector<HTMLElement>('#app')!;
   const shell = document.createElement('div'); shell.className = 'duel-ui';
-  shell.innerHTML = `<header class="duel-header"><a class="wordmark" aria-label="Nailz">NAILZ<span>!</span></a><span class="duel-format">FIVE NAILS. ONE WINNER.</span><button id="pause" aria-label="Pause duel">Ⅱ</button></header>
+  shell.innerHTML = `<header class="duel-header"><a class="wordmark" aria-label="Nailz">NAILZ<span>!</span></a><span class="duel-format">FIVE NAILS. ONE WINNER.</span><button id="sound" aria-label="Toggle sound">Sound</button><button id="pause" aria-label="Pause duel">Ⅱ</button></header>
     <div class="turn-badge"><span class="turn-dot"></span><span id="whose-turn">YOU vs OPERATOR</span><span id="strike-count"></span></div>
     <div id="match-score" class="match-score" aria-live="polite"></div><div class="depth-meter"><label for="depth">NAIL DEPTH <span id="depth-value"></span></label><progress id="depth" max="100" value="16"></progress></div><svg id="aim-overlay" viewBox="-3 -3 6 6" aria-hidden="true"><line class="guide" x1="-3" y1="0" x2="3" y2="0"/><line class="guide" x1="0" y1="-3" x2="0" y2="3"/><circle class="goal" r=".34"/><line id="line-y" class="aim-line" x1="-3" x2="3"/><line id="line-x" class="aim-line" y1="-3" y2="3"/><circle id="hit-dot" r=".065"/><circle id="local-goal" class="goal" r=".34"/><circle id="focus-ring" class="focus-ring"/></svg>
     <section class="duel-prompt"><span id="step-label"></span><h2 id="instruction"></h2><p id="hint"></p><div class="step-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div></section>
     <section id="duel-card" class="duel-card"><span class="eyebrow">FIVE SHARED NAILS</span><h2>Make the<br>last hit yours.</h2><p>Line it up. Find your focus.<br>Swipe down and drive it home.</p><div id="mode-controls"><label for="mode">Game mode</label><select id="mode"><option value="solo">Solo — vs. Operator</option><option value="pass-and-play">2 Players — Pass & Play</option></select><label id="difficulty-label" for="difficulty">Operator difficulty</label><select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option><option value="champion">Champion</option></select></div><button id="begin" class="play-button">Start match <span>↗</span></button><button id="choose-mode" class="quiet-button" hidden>Change mode</button><small>Nails won decide the match. Points track your performance.</small></section>
     <section id="handoff-card" class="duel-card" hidden><span class="eyebrow">PASS & PLAY</span><h2 id="handoff-title"></h2><p>Keep the phone upright. Take your time.<br>Only the next player should tap below.</p><button id="ready" class="play-button">I’m ready</button><small>Lift every finger before starting your turn.</small></section>
-    <section id="pause-card" class="duel-card" hidden><span class="eyebrow">TAKE YOUR TIME</span><h2>Paused.</h2><p>Your aim and timing are saved.</p><button id="resume" class="play-button">Resume match</button><button id="restart" class="quiet-button">Restart match</button></section>
+    <section id="pause-card" class="duel-card" hidden><span class="eyebrow">TAKE YOUR TIME</span><h2>Paused.</h2><p>Your aim and timing are saved.</p><fieldset class="audio-settings"><legend>Sound & motion</legend><label>Effects <input id="effects-volume" type="range" min="0" max="1" step=".05"></label><label>Music <input id="music-volume" type="range" min="0" max="1" step=".05"></label><label><input id="haptics-setting" type="checkbox"> Haptics (if supported)</label><label><input id="motion-setting" type="checkbox"> Reduced motion</label></fieldset><button id="resume" class="play-button">Resume match</button><button id="restart" class="quiet-button">Restart match</button></section>
     <div id="result-flash" role="status" aria-live="polite"></div>`;
   app.append(shell);
   const get = <T extends Element = HTMLElement>(id: string) => shell.querySelector<T>('#'+id)!;
@@ -35,6 +36,8 @@ export function mountDuel(scene: NailzScene): () => void {
   }
   function render(dt: number) {
     const s = game.snapshot;
+    audio.observe(s);scene.setReducedMotion(audio.settings.reducedMotion);
+    get('sound').textContent=audio.settings.muted?'Sound off':'Sound on';get('sound').setAttribute('aria-pressed',String(!audio.settings.muted));app.dataset.audio=audio.state;
     scene.present(s, s.paused || s.resumeIn > 0 ? 0 : dt);
     app.dataset.phase = s.phase; app.dataset.actor = s.actor;
     const active = !['MATCH_INTRO','ROUND_RESULT','MATCH_RESULT'].includes(s.phase);
@@ -102,6 +105,7 @@ export function mountDuel(scene: NailzScene): () => void {
       const r=s.lastResult;
       get('result-flash').textContent = r ? r.oneHit ? 'ONE HIT!' : r.finishing ? 'NAILED IT!' : !r.contact ? 'MISSED!' : Math.hypot(r.bend.x,r.bend.y)>.08 ? 'GLANCING HIT' : r.usablePower<.4 ? 'LIGHT TOUCH' : 'SOLID HIT' : '';
     }
+    get('match-score').classList.toggle('score-celebrate',s.phase==='IMPACT_RESOLUTION'&&Boolean(s.lastResult?.finishing)&&!audio.settings.reducedMotion);
     get('result-flash').classList.toggle('visible',s.phase==='IMPACT_RESOLUTION' && !s.paused);
     previousPhase=s.phase;
   }
@@ -135,7 +139,8 @@ export function mountDuel(scene: NailzScene): () => void {
   function cancel(event: PointerEvent) { readyPointer=null;activePointers.delete(event.pointerId);if(gesture?.id===event.pointerId)cancelGesture();if(!activePointers.size)blocked=false; }
   function lostCapture() { cancelGesture();readyPointer=null;blocked=activePointers.size>0; }
   function click(event: MouseEvent) {
-    const button=(event.target as HTMLElement).closest('button');if(!button)return;sync();interruptInput();
+    const button=(event.target as HTMLElement).closest('button');if(!button)return;audio.activate();sync();interruptInput();
+    if(button.id==='sound')audio.update({muted:!audio.settings.muted});
     if(button.id==='begin') {
       if(game.snapshot.phase==='MATCH_INTRO') { game=new Duel(Date.now()+ ++restartCount,{mode:get<HTMLSelectElement>('mode').value as GameMode,difficulty:get<HTMLSelectElement>('difficulty').value as Difficulty});game.start(); }
       else if(game.snapshot.phase==='ROUND_RESULT')game.advanceRound();
@@ -151,11 +156,15 @@ export function mountDuel(scene: NailzScene): () => void {
   }
   function selection() { const local=get<HTMLSelectElement>('mode').value==='pass-and-play';get('difficulty').toggleAttribute('hidden',local);get('difficulty-label').toggleAttribute('hidden',local); }
   get('mode').addEventListener('change',selection);
+  get<HTMLInputElement>('effects-volume').value=String(audio.settings.effects);get<HTMLInputElement>('music-volume').value=String(audio.settings.music);
+  get<HTMLInputElement>('haptics-setting').checked=audio.settings.haptics;get<HTMLInputElement>('motion-setting').checked=audio.settings.reducedMotion;
+  function settingsChanged(){audio.update({effects:Number(get<HTMLInputElement>('effects-volume').value),music:Number(get<HTMLInputElement>('music-volume').value),haptics:get<HTMLInputElement>('haptics-setting').checked,reducedMotion:get<HTMLInputElement>('motion-setting').checked});render(0);}
+  shell.addEventListener('input',settingsChanged);
   function hidden() { sync();interruptInput();if(document.hidden)game.pause();render(0); }
   function resize() { sync();interruptInput();if(game.snapshot.phase!=='MATCH_INTRO')game.pause();render(0); }
   function contextLost() { game.pause();interruptInput(); }
   app.addEventListener('pointerdown',down);app.addEventListener('pointermove',move);app.addEventListener('pointerup',up);app.addEventListener('pointercancel',cancel);app.addEventListener('lostpointercapture',lostCapture);
   shell.addEventListener('click',click);document.addEventListener('visibilitychange',hidden);window.addEventListener('resize',resize);app.addEventListener('webglcontextlost',contextLost,true);
   render(0);raf=requestAnimationFrame(frame);
-  return ()=>{cancelAnimationFrame(raf);app.removeEventListener('pointerdown',down);app.removeEventListener('pointermove',move);app.removeEventListener('pointerup',up);app.removeEventListener('pointercancel',cancel);app.removeEventListener('lostpointercapture',lostCapture);shell.removeEventListener('click',click);document.removeEventListener('visibilitychange',hidden);window.removeEventListener('resize',resize);app.removeEventListener('webglcontextlost',contextLost,true);shell.remove();};
+  return ()=>{cancelAnimationFrame(raf);app.removeEventListener('pointerdown',down);app.removeEventListener('pointermove',move);app.removeEventListener('pointerup',up);app.removeEventListener('pointercancel',cancel);app.removeEventListener('lostpointercapture',lostCapture);shell.removeEventListener('input',settingsChanged);shell.removeEventListener('click',click);document.removeEventListener('visibilitychange',hidden);window.removeEventListener('resize',resize);app.removeEventListener('webglcontextlost',contextLost,true);shell.remove();};
 }

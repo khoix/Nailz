@@ -32,3 +32,6 @@ Measured development captures and CPU submission profile are in `docs/validation
 ## E5 operator ownership
 
 The scene owns and disposes the operator geometry/materials and rig. No additional downloads are required. Pose inspection fixtures are development-only (`src/dev/animationFixtures.ts`); production has no pose injection API. Hand transforms follow the sampled hammer, while only the existing game model applies contact. See `docs/validation/e5/README.md` for clip names, timing, screenshots, and validation limits. Stable human target views reuse the last WebGL frame while SVG aim runs continuously; pause and ambient drawing avoid redundant GPU work.
+
+## E6 effects/audio checkpoint
+`src/effects/impact.ts` contains original procedural, pooled particles/rings/trails. `src/audio/controller.ts` synthesizes original short nonmusical noise/oscillator transients; no external recordings or music are bundled. Optional user music is configured only in `src/audio/config.ts` and uses the existing versioned cache. Pool/voice limits and incomplete gates are documented in `docs/validation/e6/README.md`.

@@ -70,7 +70,7 @@ This builds `dist` and serves the production bundle with Vite preview. Browser a
 
 Results, screenshots, and Playwright traces are saved under `artifacts/e2e/`; failures also save the page HTML. Open a trace with `npx playwright show-trace artifacts/e2e/<scenario>/trace.zip`. `.github/workflows/test.yml` runs unit tests and production E2E on pushes and pull requests, retaining artifacts for seven days. The individual `test:duel-browser` and `test:match-browser` commands still use the development server for fast diagnosis.
 
-CI runs seven independent browser jobs: `asset-loading`, `solo-controls`, `local-matches`, `solo-easy`, `solo-normal`, `solo-hard`, and `solo-champion`. Each keeps the ten-minute scenario watchdog and uploads its own artifacts; a failed job does not cancel the others. This gives each complete solo journey its own budget on software-rendered runners. Run one production scenario locally with, for example, `npm run test:e2e -- solo-hard`; omit the argument to run all seven sequentially. Logs include scenario and completed-nail progress, and watchdog termination is explicitly recorded in the summary.
+CI runs eight independent browser jobs: `audio-settings`, `asset-loading`, `solo-controls`, `local-matches`, `solo-easy`, `solo-normal`, `solo-hard`, and `solo-champion`. Each keeps the ten-minute scenario watchdog and uploads its own artifacts; a failed job does not cancel the others. This gives each complete solo journey its own budget on software-rendered runners. Run one production scenario locally with, for example, `npm run test:e2e -- solo-hard`; omit the argument to run all eight sequentially. Logs include scenario and completed-nail progress, and watchdog termination is explicitly recorded in the summary.
 
 `NAILZ_CHROMIUM_PATH` selects an installed browser. Optional `NAILZ_BROWSER_DPR` changes rendering pixel density (default 1) without changing the 390×844 CSS-pixel phone viewport or input rules. Test outcomes are browser automation results, not physical phone certification.
 
@@ -85,3 +85,6 @@ Production E2E also verifies cold/warm cache loading, old-cache retirement, corr
 ## Operator and motion
 
 The host has nine sampled poses, an articulated hammer grip, player-hit reactions, and host-only behavior in local play. Contact timing and scoring remain simulation-owned. `npm run test:operator` inspects pose alignment, pause/reset cleanup, near-flush/glancing contact, and camera views through the development inspector. See `docs/validation/e5/README.md` for timing and captures.
+
+## E6 impact/audio checkpoint
+Strikes now drive pooled trails, impact rings/dust, glance bursts, recoil, restrained camera impulses, and match confetti. Sound starts from a user gesture. Use the header Sound button or pause settings for mute, effects/music levels, reduced motion, and opt-in supported haptics. User music remains absent by default; configure its URL/version/gain/loop in `src/audio/config.ts` later. Full E6 audiovisual validation and ambience remain pending; see the handoff.

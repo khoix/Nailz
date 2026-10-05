@@ -1,11 +1,11 @@
 # Nailz! handoff
 
 ## Checkpoint
-- **E5 implemented. Hammer head correction `4d1812b` passed all seven hosted production scenarios. Player-facing handle follow-up retains 41 unit tests and expands to 19 passing pose checks; inspect its latest hosted CI before E6.**
+- **E6 partial checkpoint: impacts, synthesized nonmusical SFX, gesture audio and settings implemented. 44 unit tests, build, audio/settings production E2E and solo-controls production E2E passed locally. Full eight-scenario CI and the visual/audio gate remain pending. Continue E6; do not begin E7.**
 - Repository: https://github.com/khoix/Nailz, branch `codex/nailz-arcade-build`. E5 starts from E4 commit `188c765e11fe496f386be91d4511dbc4914e9282`. PR #2 was merged externally before E4; continue the same feature branch.
 - Complete five-nail matches in Solo — vs. Operator and 2 Players — Pass & Play. Random first starter, alternating nail starters, all five nails even after an early clinch, round/match results, scoring, rematch, and mode selection outside matches.
 - Local rematches swap the first starter. Both participants use E2's existing Y/X/focus/swipe pipeline and identical timing. The operator has no competitive local turns. Carnival scenery and hero props are now authored; the operator now has an articulated rig, grip following, and snapshot-driven reactions.
-- User supplies music later. No music was generated or substituted. Preload/cache and render preparation are implemented. Dynamic Tap to Play, gesture-initiated audio, effects and menu polish remain in E6–E7.
+- User supplies music later. No music was generated or substituted. Preload/cache and render preparation are implemented. Gesture-initiated audio and impact effects are now implemented; dynamic Tap to Play and final menu polish remain E7.
 
 ## Architecture and rules
 - `src/game/duel.ts` remains the single DOM-free state machine. Participant controller type replaces hardcoded player-side checks. `advanceRound()` resets the nail and picks the alternating starter; the fifth result leads to MATCH_RESULT. There are no delayed AI callbacks to survive restart or mode changes.
@@ -72,3 +72,10 @@ After verifying E5 regression and new hosted CI, read E6 in the build plan: impa
 
 ## Persistence
 Shell Git has read access but no push credentials. Use connected GitHub Git Data APIs on this feature branch: upload changed blobs/tree, create a commit with the verified branch head as parent, update the same ref without force, fetch, compare tree SHA, and align local history only after exact content verification. Preserve the local checkpoint before aligning API-created history. Do not initialize main, merge, or deploy by default.
+
+## E6 checkpoint — continue here
+- `src/effects/events.ts`: once-per-action sound events and actor-independent intensity. `src/effects/impact.ts`: fixed 80-point burst/confetti pool, ring, eight-point actual-hammer trail; no gameplay RNG. Low quality uses 16 burst / 24 confetti points. Reduced motion removes particles/trails/shake and snaps camera transitions; contact ring and result text remain. Paused effects retain sampled time. Scene adds block recoil and a 45ms presentation-only strong-hit hold; model timing is unchanged.
+- `src/audio/controller.ts`: one gesture-created AudioContext, at most 16 short effect voices with disconnection, whoosh/wood/metal/glance/finish transients, gain controls, suspend on pause/background, resume handling, capability-detected opt-in haptics. No audio assets or music were generated/bundled. `src/audio/config.ts` is the single optional user track entry (null by default), loaded via existing Preloader/cache, decoded once, single source, loop option and fade-in.
+- `nailz-settings-v1` saves master mute, separate effect/music levels, haptics, and reduced motion with storage-denial fallback. Temporary controls are in the pause card, with a header sound toggle; E7 owns their final design.
+- Verified: 44 unit tests/typecheck/build; production audio-settings test covers gesture ownership, saved mute/volume/motion/haptics, absent music and denied audio continuing into low-quality play. Production solo-controls passed with the new presentation. Two later narrow fixes (paused trail preservation, explicit music fade-in) were typechecked/unit-tested; full hosted suite validates the final tree. Captures/report in `docs/validation/e6/`.
+- Still required for E6: original/cleared nonmusical ambience; auditory review/tuning of layers, full supplied-music lifecycle tests using a test-only buffer, audible music integration when user supplies the track, complete visual-gate captures/video review across miss/normal/glance/perfect, muted and low-quality variants; performance measurements and ten-match resource/audio cleanup; physical haptics/Safari. Full production CI is pending at save time, not a claimed pass.

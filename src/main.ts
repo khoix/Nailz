@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { createScene, type NailzScene } from './scene/createScene.ts';
 import { mountDuel } from './ui/duelUI.ts';
 import { Preloader, decodeImage } from './assets/loader.ts';
+import { createAudio } from './audio/controller.ts';
 import { BOOTH_MANIFEST } from './assets/manifest.ts';
 const canvas = document.querySelector<HTMLCanvasElement>('#scene')!;
 const app=document.querySelector<HTMLElement>('#app')!;
@@ -11,6 +12,7 @@ loading.innerHTML='<span class="eyebrow">NAILZ! / NIGHT CARNIVAL</span><h2 id="l
 app.append(loading);
 let storage:CacheStorage|undefined;try{storage=window.caches;}catch{}
 const loader=new Preloader(storage), textures=new Map<string,THREE.Texture>();
+const audio=createAudio(loader);
 let scene:NailzScene|undefined,cleanup:(()=>void)|undefined,busy=false,disposed=false;
 const abort=new AbortController();
 async function start(){
@@ -33,7 +35,7 @@ async function start(){
   if(import.meta.env.DEV&&new URLSearchParams(location.search).has('lab')){
    const {mountInspector}=await import('./dev/inspector.ts');cleanup=mountInspector(scene);
   }else{
-   document.querySelector('.masthead')?.remove();document.querySelector('.scene-caption')?.remove();cleanup=mountDuel(scene);
+   document.querySelector('.masthead')?.remove();document.querySelector('.scene-caption')?.remove();cleanup=mountDuel(scene,audio);
   }
   app.dataset.loading='ready';loading.remove();
  }catch(error){
@@ -43,4 +45,4 @@ async function start(){
  }finally{busy=false;}
 }
 loading.querySelector('button')!.addEventListener('click',start);void start();
-import.meta.hot?.dispose(()=>{disposed=true;abort.abort();cleanup?.();scene?.dispose();textures.forEach(t=>t.dispose());loader.dispose();loading.remove();});
+import.meta.hot?.dispose(()=>{disposed=true;abort.abort();cleanup?.();scene?.dispose();textures.forEach(t=>t.dispose());audio.dispose();loader.dispose();loading.remove();});
