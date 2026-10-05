@@ -25,7 +25,7 @@ if(bypassTitle){
    <div class="title-loader">
     <div class="title-progress-meta"><span id="load-stage">Loading carnival…</span><span id="load-percent">0%</span></div>
     <progress id="load-progress" max="100" value="0" aria-label="Game loading progress"></progress>
-    <p id="load-detail">Preloading and caching booth assets.</p>
+    <p id="load-detail">Setting up the booth.</p>
     <button id="tap-to-play" class="play-button title-play" hidden>Tap to Play <span>↗</span></button>
     <button id="load-retry" class="quiet-button" hidden>Retry loading</button>
    </div>
@@ -72,12 +72,12 @@ async function prepare(){
  if(busy||disposed)return;busy=true;ready=false;app.dataset.loading='fetching';app.dataset.startup='loading';
  startup.querySelector<HTMLButtonElement>('#load-retry')!.hidden=true;
  const tap=startup.querySelector<HTMLButtonElement>('#tap-to-play');if(tap)tap.hidden=true;
- setProgress(0,'Loading carnival…','Preloading and caching booth assets.');
+ setProgress(0,'Loading carnival…','Setting up the booth.');
  try{
   await loader.prepare(BOOTH_MANIFEST,p=>{
    const ratio=p.total?p.ready/p.total:1;
    const value=p.stage==='preparing'?70:Math.round(ratio*70);
-   setProgress(value,p.stage==='preparing'?'Preparing assets…':'Loading assets…',`${p.ready} / ${p.total} essential assets ready`);
+   setProgress(value,p.stage==='preparing'?'Getting things ready…':'Loading carnival…','Setting up the booth.');
   },abort.signal);
   app.dataset.loading='preparing';
   const imageAssets=BOOTH_MANIFEST.assets.filter(asset=>asset.kind==='texture');let decoded=0;
@@ -86,15 +86,15 @@ async function prepare(){
     try{const image=await decodeImage(loader.get(asset)!);const texture=new THREE.Texture(image);texture.colorSpace=THREE.SRGBColorSpace;texture.needsUpdate=true;texture.anisotropy=2;textures.set(asset.id,texture);}
     catch(error){await loader.invalidate(asset);throw error;}
    }
-   decoded++;setProgress(70+Math.round(decoded/Math.max(1,imageAssets.length)*15),'Preparing textures…',`${decoded} / ${imageAssets.length} textures ready`);
+   decoded++;setProgress(70+Math.round(decoded/Math.max(1,imageAssets.length)*15),'Getting things ready…','Polishing the stage.');
   }
   if(disposed)return;
-  setProgress(88,'Warming up the booth…','Preparing the 3D stage.');
+  setProgress(88,'Warming up the booth…','Almost there…');
   scene=createScene(canvas,textures);await scene.prepare();
   if(disposed){scene.dispose();return;}
-  setProgress(96,'Finishing setup…','Finalizing cached assets.');
+  setProgress(96,'Almost ready…','');
   await loader.ready(BOOTH_MANIFEST);
-  ready=true;app.dataset.loading='ready';setProgress(100,'Ready','Everything is loaded and ready to play.');
+  ready=true;app.dataset.loading='ready';setProgress(100,'','');
   if(bypassTitle)mountPreparedExperience();
   else{app.dataset.startup='awaiting-intent';startup.dataset.ready='true';startup.querySelector<HTMLButtonElement>('#tap-to-play')!.hidden=false;}
  }catch(error){console.warn('Booth preparation failed',error);scene?.dispose();scene=undefined;showFailure();}

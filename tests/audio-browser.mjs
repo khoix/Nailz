@@ -18,7 +18,7 @@ await runScenario('audio-settings',5184,async({page,url,artifactDir})=>{
  await page.locator('#effects-volume').focus();await page.keyboard.press('Home');await page.keyboard.press('ArrowRight');
  await page.locator('#sound').click();await captureScreenshot(page,`${artifactDir}/settings.png`);
  await page.reload();await page.locator('#tap-to-play').waitFor();assert.equal(await page.evaluate(()=>window.audioContexts),0,'Reload stays silent until title intent');
- await page.locator('#tap-to-play').click();await page.locator('#begin').waitFor();assert.equal(await page.locator('#sound').textContent(),'Sound off');
+ await page.locator('#tap-to-play').click();await page.locator('#begin').waitFor();assert.equal(await page.locator('#sound').getAttribute('aria-label'),'Unmute sound');assert.equal(await page.locator('#sound').getAttribute('data-muted'),'true');
  const settings=await page.evaluate(()=>JSON.parse(localStorage.getItem('nailz-settings-v1')));assert.equal(settings.effects,.05);assert.equal(settings.reducedMotion,true);assert.equal(settings.haptics,true);
  assert.deepEqual(musicRequests,[],'Absent music must make no audio file requests');
  await page.addInitScript(()=>{window.AudioContext=class {constructor(){throw Error('Audio denied');}};});
