@@ -100,3 +100,8 @@ Shell Git has read access but no push credentials. Use connected GitHub Git Data
 - No placeholder music was created or bundled. The optional supplied-track path has retry/cache/decode/fade/single-source lifecycle tests using test-only data. Actual audible music integration waits for the user's track.
 - Subjective speaker/headphone mix review and physical Safari/iPhone/Android haptics/performance are not claimed; carry them into the E8/E9 hardware/release gates.
 - **Next execution: E7 — Player-facing interface and onboarding.** Do not reopen E6 mechanics or presentation unless a reproduced defect requires it.
+
+
+## Deferred design note — points mechanic review
+- The current points system remains unchanged. Do not add rewards, progression, tiebreak behavior, or other consequences yet.
+- Revisit points in a dedicated gameplay-design pass to decide what meaningful role they should serve. Until then, avoid player-facing copy that explains or justifies points as merely a performance tracker.
