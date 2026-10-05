@@ -110,3 +110,13 @@ h1 span { color: #ff7770; }
 .title-screen[data-ready=true] #load-progress,
 .title-screen[data-ready=true] #load-detail { display:none; }
 .title-screen[data-ready=true] .title-play { margin-top:0; }
+/* E7 attract shell: marquee bulb chase and pulsing prompt need no loaded assets. Reduced motion keeps steady framing. */
+.title-screen::before { animation:marquee-chase 1.6s steps(2) infinite; }
+/* Once the booth is prepared it shows through the title as the live attract backdrop. */
+.title-screen[data-ready=true] { background:linear-gradient(180deg,#11122255 0%,#17162a88 54%,#0b1722cc 100%); }
+.title-play:not([disabled]) { animation:prompt-pulse 1.5s ease-in-out infinite; }
+.title-play[disabled] { opacity:.78;background:#e0b57a;cursor:progress;justify-content:center; }
+@keyframes marquee-chase { 0% { background-position:0 0; } 100% { background-position:54px 0; } }
+/* Glow only: no layout/transform change, so the button stays stable for taps and automation. */
+@keyframes prompt-pulse { 0%,100% { box-shadow:0 0 0 1px #ffd89b28,0 10px 32px #ff9c6650; } 50% { box-shadow:0 0 0 3px #ffd89b66,0 14px 44px #ff9c66a0; } }
+@media (prefers-reduced-motion:reduce) { .title-screen::before,.title-play { animation:none; } }
