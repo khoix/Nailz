@@ -82,7 +82,7 @@ export function mountDuel(scene: NailzScene): () => void {
     const steps = ['TARGET_Y','TARGET_X','RETICLE','READY_TO_SWING'];
     shell.querySelectorAll<HTMLElement>('.step-dots i').forEach((dot,i)=>dot.classList.toggle('lit', i <= steps.indexOf(s.phase) && s.isHuman));
     const overlay = get<SVGSVGElement>('aim-overlay');
-    const showAim = isAiming(s.phase) && !s.paused && s.resumeIn === 0;
+    const showAim = s.isHuman && isAiming(s.phase) && !s.paused && s.resumeIn === 0;
     overlay.style.display = showAim ? 'block' : 'none';
     if (showAim) {
       const rect = scene.getTargetRect(); const r = rect.radiusPixels;

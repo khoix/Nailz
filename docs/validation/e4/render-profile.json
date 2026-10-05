@@ -1,0 +1,18 @@
+{
+  "shots": [
+    "booth-390.png",
+    "target-390.png",
+    "impact-390.png",
+    "booth-844.png",
+    "target-844.png",
+    "impact-844.png"
+  ],
+  "profile": {
+    "medianMs": 1.2000000001862645,
+    "p95Ms": 1.8999999999068677,
+    "calls": 109,
+    "triangles": 46248
+  },
+  "deviceScaleFactor": "1",
+  "renderer": "Chromium SwiftShader; CPU submission cost, not hardware GPU frame rate"
+}
