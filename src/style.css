@@ -79,3 +79,25 @@ h1 span { color: #ff7770; }
 .score-celebrate { color:#ffe58b;box-shadow:0 0 20px #ffbf4c70; }
 #pause-card { max-height:85svh;overflow:auto; }
 @media(prefers-reduced-motion:reduce){.score-celebrate { box-shadow:none; }}
+
+
+/* Player-facing startup/title gate. The duel UI is not mounted until Tap to Play. */
+.title-screen { position:absolute;inset:0;z-index:50;display:grid;place-items:center;padding:max(24px,env(safe-area-inset-top)) 6% max(24px,env(safe-area-inset-bottom));overflow:hidden;background:radial-gradient(circle at 50% 27%,#7b365666 0 17%,transparent 45%),radial-gradient(circle at 50% 70%,#173b5260 0 14%,transparent 48%),linear-gradient(180deg,#111222 0%,#17162a 54%,#0b1722 100%); }
+.title-screen::before { content:"";position:absolute;inset:0;pointer-events:none;opacity:.28;background:radial-gradient(circle,#ffc47b 0 2px,transparent 2.5px) 0 0/54px 54px;mask-image:linear-gradient(to bottom,#000,transparent 36%); }
+.title-panel { position:relative;width:min(430px,92vw);text-align:center; }
+.title-kicker { display:block;color:#ffc47b;font-size:10px;font-weight:900;letter-spacing:.34em;margin-bottom:18px; }
+.title-wordmark { margin:0;font-size:clamp(76px,24vw,128px);line-height:.8;font-weight:950;font-style:italic;letter-spacing:-.09em;transform:skew(-7deg);color:#fff1d9;text-shadow:4px 6px 0 #713344,0 0 36px #ff7a7160; }
+.title-wordmark span { color:#ff7770; }
+.title-tagline { margin:24px 0 34px;color:#d8cad8;font-size:10px;font-weight:800;letter-spacing:.2em; }
+.title-loader { width:min(360px,100%);margin:0 auto;padding:18px;border:1px solid #ffffff24;border-radius:18px;background:#111827d9;box-shadow:0 18px 60px #0007;backdrop-filter:blur(10px); }
+.title-progress-meta { display:flex;justify-content:space-between;gap:18px;margin-bottom:10px;color:#f7e4cb;font-size:10px;font-weight:800;letter-spacing:.08em; }
+#load-progress { display:block;width:100%;height:8px;border:0;border-radius:99px;overflow:hidden;background:#ffffff14;appearance:none;-webkit-appearance:none; }
+#load-progress::-webkit-progress-bar { background:#ffffff14;border-radius:99px; }
+#load-progress::-webkit-progress-value { background:linear-gradient(90deg,#ff7770,#ffc47b);border-radius:99px;transition:width .16s ease; }
+#load-progress::-moz-progress-bar { background:linear-gradient(90deg,#ff7770,#ffc47b);border-radius:99px; }
+.title-loader p { min-height:18px;margin:11px 0 15px;color:#aaa2b6;font-size:11px;line-height:1.45; }
+.title-play { margin-top:4px;box-shadow:0 0 0 1px #ffd89b28,0 10px 32px #ff9c6650; }
+.title-screen[data-ready=true] .title-loader { border-color:#ffc47b66; }
+.title-screen[data-ready=true] .title-progress-meta { color:#ffe6b8; }
+@media (max-height:620px) { .title-screen { padding-top:18px;padding-bottom:18px; }.title-wordmark { font-size:72px; }.title-tagline { margin:14px 0 18px; }.title-loader { padding:14px; } }
+@media (prefers-reduced-motion:reduce) { #load-progress::-webkit-progress-value { transition:none; } }

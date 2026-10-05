@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { runScenario, captureScreenshot } from './browser-harness.mjs';
+import { runScenario, captureScreenshot, enterGame } from './browser-harness.mjs';
 await runScenario('solo-controls',5175,async ({page,errors,artifactDir,url})=>{
  await page.clock.install({time:new Date('2026-10-04T17:00:00Z')});
  await page.clock.pauseAt(new Date('2026-10-04T17:00:01Z'));
- await page.goto(url);await page.locator('#begin').waitFor();
+ await page.goto(url);await page.locator('#tap-to-play').waitFor();await captureScreenshot(page,`${artifactDir}/title.png`);await enterGame(page);
  await captureScreenshot(page,`${artifactDir}/start.png`);
  await page.clock.setFixedTime(new Date(11));
  await page.locator('#begin').click();
