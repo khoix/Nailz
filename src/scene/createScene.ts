@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildEnvironment } from './environment.ts';
 import { createOperator } from './operator.ts';
 import { hammerMotion } from './animation.ts';
+import { createHammer, poseHammer, HAMMER_FACE, HAMMER_GRIP, HAMMER_GRIP_ROTATION } from './hammer.ts';
 import type { NailState, StrikeResult } from '../game/types.ts';
 import { createNail } from '../game/strike.ts';
 import { DUEL_TIMING, type DuelSnapshot } from '../game/duel.ts';
@@ -74,16 +74,8 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
   for (let i = 0; i < 12; i++) { const part = new THREE.Mesh(shaftGeometry, metal); part.castShadow = true; nailGroup.add(part); shaft.push(part); }
   const headProfile=[[0,-.021],[.098,-.021],[NAIL_HEAD_RADIUS,-.009],[NAIL_HEAD_RADIUS,.007],[.097,.021],[0,.021]].map(([r,y])=>new THREE.Vector2(r,y));
   const head = makeMesh(new THREE.LatheGeometry(headProfile,48), metal, nailGroup);
-  const hammer = new THREE.Group(); scene.add(hammer);
-  const hammerHead = makeMesh(new RoundedBoxGeometry(0.42, 0.15, 0.19, 3, .035), metal, hammer);
-  hammerHead.position.y = 0;
-  // Only this raised circular striking face contacts the nail: radius .65 heads.
-  const strikingFace = makeMesh(new THREE.CylinderGeometry(NAIL_HEAD_RADIUS * .65, NAIL_HEAD_RADIUS * .65, .06, 24), metal, hammer);
-  strikingFace.position.y = -.105;
-  const handle = makeMesh(new THREE.CylinderGeometry(0.046, 0.06, 0.87, 16), wood, hammer); handle.position.y = 0.49;
-  const sleeve = makeMesh(new THREE.CylinderGeometry(0.063, 0.068, 0.4, 16), grip, hammer); sleeve.position.y = 0.76;
-  instances(new THREE.TorusGeometry(.066,.008,4,16),plinth,9,hammer,(wrap,i)=>{wrap.rotation.x=Math.PI/2;wrap.position.y=.59+i*.038;});
-  for(const y of [.55,.96]){const collar=makeMesh(new THREE.CylinderGeometry(.071,.071,.032,16),brass,hammer);collar.position.y=y;}
+  const hammerModel = createHammer({metal, wood, grip, trim:plinth, brass}, NAIL_HEAD_RADIUS * .65);
+  const hammer = hammerModel.root; scene.add(hammer);
   const contactMaterial = new THREE.MeshBasicMaterial({ color: '#ffde8a', depthTest: false }); materials.push(contactMaterial);
   const marker = makeMesh(new THREE.SphereGeometry(0.018, 12, 8), contactMaterial); marker.renderOrder = 10; marker.visible = false;
   let nail = createNail();
@@ -105,7 +97,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     head.position.copy(point(1)); head.position.y += 0.021;
     const tangent = point(1).sub(point(0.99)).normalize();
     head.quaternion.setFromUnitVectors(WORLD_UP, height > 0 ? tangent : WORLD_UP);
-    hammer.position.set(0.43, BLOCK_TOP + height + 0.46, 0.05); hammer.rotation.set(0, 0, -0.55);
+    hammer.position.set(0.43, BLOCK_TOP + height + 0.46, 0.05); hammer.rotation.set(-0.55, 0, 0);
     marker.visible = false;
     if (immediate) { updateCamera(); render(); }
   }
@@ -182,12 +174,10 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     hammer.visible = !inTarget;
     if (phase === 'READY_TO_SWING' || phase === 'SWING' || phase === 'IMPACT_RESOLUTION') {
       const offset = pending?.offset ?? snapshot.aim;
-      const point = nailLocalToWorld(offset.x, offset.y, headHeight + .135);
+      const point = nailLocalToWorld(offset.x, offset.y, headHeight);
       const {lift,angle}=hammerMotion(snapshot);
       if(phase==='SWING')rememberedDepth=snapshot.nail.depth;
-      // Head's bottom face reaches the sampled nail-local contact at t=1.
-      hammer.position.copy(point).add(new THREE.Vector3(.35 * lift, lift, 0));
-      hammer.rotation.set(0, 0, angle);
+      poseHammer(hammer, point, lift, angle);
     }
     if (!snapshot.isHuman && phase === 'TARGET_Y') {
       marker.visible = true;
@@ -200,7 +190,8 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
       contactMaterial.color.set('#ffde8a');
     }
     hammer.updateWorldMatrix(true,false);
-    gripPoint.set(0,.76,0).applyMatrix4(hammer.matrixWorld);hammer.getWorldQuaternion(gripRotation);
+    gripPoint.copy(HAMMER_GRIP).applyMatrix4(hammer.matrixWorld);
+    hammer.getWorldQuaternion(gripRotation).multiply(HAMMER_GRIP_ROTATION);
     operator.setVisible(!inTarget || phase==='NAIL_SETUP');
     operator.update(snapshot,dt,gripPoint,gripRotation,head.position);
     const staticTarget=inTarget&&phase!=='NAIL_SETUP'&&cameraWasSettled&&transitionTime===1&&!changed&&phase===lastPresentationPhase&&previousNailDepth===snapshot.nail.depth;
@@ -228,7 +219,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
     },
     setQuality(value: 'low'|'high') {quality=value;renderer.shadowMap.enabled=value==='high';environment.setQuality(value==='low');resize();},
     metrics() {return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,quality};},
-    animationState(){return {clip:operator.clip,operatorVisible:operator.root.visible,grip:gripPoint.toArray(),...operator.diagnostics()};},
+    animationState(){return {clip:operator.clip,operatorVisible:operator.root.visible,grip:gripPoint.toArray(),hammerFace:hammer.localToWorld(HAMMER_FACE.clone()).toArray(),hammerDown:new THREE.Vector3(0,-1,0).applyQuaternion(hammer.quaternion).toArray(),...operator.diagnostics()};},
     setNail: poseNail,
     setView(view: CameraView) { currentView = view; updateCamera(); render(); },
     showStrike(result: StrikeResult) {
@@ -248,7 +239,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
       disposed = true; observer.disconnect();
       canvas.removeEventListener('webglcontextlost', lose); canvas.removeEventListener('webglcontextrestored', restore);
       geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose());
-      operator.dispose(); environment.dispose(); environmentMap.dispose(); key.shadow.dispose(); renderer.dispose();
+      hammerModel.dispose(); operator.dispose(); environment.dispose(); environmentMap.dispose(); key.shadow.dispose(); renderer.dispose();
     },
   };
 }

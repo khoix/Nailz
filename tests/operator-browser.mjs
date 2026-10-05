@@ -3,12 +3,17 @@ import {writeFile} from 'node:fs/promises';
 import {runScenario,captureScreenshot} from './browser-harness.mjs';
 await runScenario('operator-poses',5182,async({page,url,artifactDir})=>{
  await page.goto(url+'/?lab');await page.locator('#pose').waitFor();
- const names=['Idle','Setup','Aim','Swing','Contact','Normal rebound','Glancing rebound','Straighten','Near flush','One hit','Losing','Confident','Host celebration'];
+ const names=['Idle','Setup','Aim','Ready','Swing','Contact','Human contact','Normal rebound','Glancing rebound','Straighten','Near flush','One hit','Losing','Confident','Host celebration'];
  const results=[];
  for(const name of names){
   await page.selectOption('#animation-case',name);await page.locator('#pose').click();
   const state=JSON.parse(await page.locator('.inspector').getAttribute('data-animation'));results.push({name,...state});
   assert.ok(state.gripError<1e-8,'Operator wrist must coincide with the hammer grip');if(name==='Host celebration'){assert.equal(state.clip,'celebrate');assert.equal(state.holding,false);}if(name==='Swing')assert.equal(state.clip,'swing');if(name==='One hit')assert.equal(state.clip,'surprised');
+  if(name==='Contact'||name==='Human contact'){
+   assert.ok(Math.abs(state.hammerDown[1]+1)<1e-8,'Head striking end must face straight down at contact');
+   assert.ok(Math.abs(state.grip[1]-state.hammerFace[1]-.27)<1e-8,'Grip must sit above the head face with a horizontal handle');
+   assert.ok(state.grip[2]<state.hammerFace[2]-.7,'Handle must extend back toward the wielder');
+  }
   await page.addStyleTag({content:'.inspector,.masthead,.scene-caption {visibility:hidden}'});
   await captureScreenshot(page,`${artifactDir}/${name.toLowerCase().replaceAll(' ','-')}.png`);
   await page.addStyleTag({content:'.inspector,.masthead,.scene-caption {visibility:visible}'});
