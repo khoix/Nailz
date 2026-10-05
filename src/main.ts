@@ -32,6 +32,9 @@ if(bypassTitle){
   </div>`;
 }
 app.append(startup);
+// Prevent the raw server-rendered fallback markup from flashing before Vite's CSS
+// and the real title screen are ready. Full styles are loaded before this module runs.
+app.style.visibility='visible';
 
 let storage:CacheStorage|undefined;try{storage=window.caches;}catch{}
 const loader=new Preloader(storage),textures=new Map<string,THREE.Texture>();
