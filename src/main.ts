@@ -32,16 +32,14 @@ async function start(){
   scene=createScene(canvas,textures);await scene.prepare();
   if(disposed){scene.dispose();return;}
   await loader.ready(BOOTH_MANIFEST);
-  if(import.meta.env.DEV&&new URLSearchParams(location.search).has('lab')){
+  const params=new URLSearchParams(location.search);
+  if(params.has('soak')){
+   document.querySelector('.masthead')?.remove();document.querySelector('.scene-caption')?.remove();
+   const {mountResourceSoak}=await import('./dev/resourceSoak.ts');cleanup=mountResourceSoak(scene,audio);
+  }else if(import.meta.env.DEV&&params.has('lab')){
    const {mountInspector}=await import('./dev/inspector.ts');cleanup=mountInspector(scene);
   }else{
    document.querySelector('.masthead')?.remove();document.querySelector('.scene-caption')?.remove();cleanup=mountDuel(scene,audio);
-  }
-  if(new URLSearchParams(location.search).has('qa')) {
-    (globalThis as typeof globalThis & {__NAILZ_QA__?:unknown}).__NAILZ_QA__={
-      scene:()=>scene?.metrics()??null,
-      audio:()=>audio.diagnostics(),
-    };
   }
   app.dataset.loading='ready';loading.remove();
  }catch(error){
@@ -51,4 +49,4 @@ async function start(){
  }finally{busy=false;}
 }
 loading.querySelector('button')!.addEventListener('click',start);void start();
-import.meta.hot?.dispose(()=>{disposed=true;abort.abort();cleanup?.();scene?.dispose();textures.forEach(t=>t.dispose());audio.dispose();loader.dispose();Reflect.deleteProperty(globalThis,'__NAILZ_QA__');loading.remove();});
+import.meta.hot?.dispose(()=>{disposed=true;abort.abort();cleanup?.();scene?.dispose();textures.forEach(t=>t.dispose());audio.dispose();loader.dispose();loading.remove();});
