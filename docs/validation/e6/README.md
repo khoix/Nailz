@@ -1,19 +1,47 @@
-# E6 partial validation
+# E6 validation — implementation complete
 
-## Continuation on October 5, 2026
+## Scope completed
 
-48 unit tests, typecheck, and production build pass. Audio lifecycle tests cover context/loop ownership, volume/mute/pause, 20 repeated pause cycles, 100 contact events, 16 overlapping voices, cleanup/reuse, optional load retry, corrupt decode invalidation, and late completion after disposal. These use a mocked Web Audio context and test-only blobs, not an included music track.
+E6 now implements the arcade-impact and sound layer described in the build plan without changing gameplay resolution or timing:
 
-Production `audio-settings` passed again on Chromium 153.0.8010.0, software WebGL, DPR .5, including repeated sound toggles while paused. The actual pointer-driven one-hit journey passed in normal, muted, and low-quality modes. Results and compact recordings are in `followup/`. Contact/rebound stills were reviewed in normal and low modes: the hammer head contacts the nail and the human grip faces the player, with readable result feedback. This is not a claim that every gameplay pose was reviewed.
+- pooled hammer trails, contact bursts, dust/sparks, directional glance treatment, block recoil, brief presentation-only hit-stop, restrained camera impulse, one-hit treatment, score celebration, and match confetti;
+- layered synthesized whoosh, wood, metal, glance/bend, and finish effects plus a quiet original nonmusical filtered-noise booth ambience;
+- a single gesture-created AudioContext, bounded short-effect voices, pause/background suspension, idempotent cleanup, and capability-detected opt-in haptics;
+- separate effects/music levels, master mute, reduced motion, saved settings with storage-failure fallback, and a single optional user-supplied music path with cache/decode/retry/fade-in lifecycle;
+- no generated, sourced, or bundled placeholder music. MUSIC remains null until the user supplies a track.
 
-Recordings: [normal](followup/normal.mp4), [muted](followup/muted.mp4), [low](followup/low.mp4). Playwright captures the real production UI with the simulation clock advanced in 25ms steps during the strike. The saved 256px-wide, 12fps silent previews accelerate captured wall time by 5×. The software screencast occasionally pads a lower-resolution frame during screenshot capture. They are ordering/pose evidence, not audio recordings or real-time frame-rate measurements. Full-size WebM, stills and traces are reproducible with the README command. The video dependency is Playwright FFmpeg; recording is opt-in and off in routine CI.
+## Automated validation
 
-A full sequential production regression was started during this time-boxed run. `followup/production-e2e.json` records completed scenarios at the save checkpoint; omitted scenarios must not be treated as passes. Four local scenarios completed (audio-settings, asset-loading, solo-controls, and two local matches); the solo difficulty run was stopped for the save phase. The previous checkpoint's eight hosted scenarios passed (run 37265678171); new hosted CI must be checked separately.
+The code-bearing E6 completion checkpoint is 6bdc359 on codex/nailz-arcade-build.
 
-## Resource and ownership checks
+- **49 unit tests pass**, including exact contact/event ownership, fixed-pool effects, reduced motion, one-context audio ownership, 20 pause cycles, 100 contact events, 16-voice overlap cap, retry/corrupt-cache handling, late async disposal, and opt-in haptic dispatch.
+- Typecheck and production build pass.
+- Production browser coverage now includes the established asset-loading, solo-controls, local-match, and all four solo-difficulty journeys plus audio-settings, three E6 visual-gate modes, and the E6 resource soak.
+- visual-normal, visual-muted, and visual-low exercise the real production UI and public pointer controls. Each records/captures booth, targeting, raised hammer, miss, normal hit, glancing hit, perfect/one-hit, rebound, operator reaction, and finish states. Muted mode preserves visual feedback; low quality preserves the required impact hierarchy.
+- The visual captures and motion recording were reviewed. The hammer head reaches the nail with the grip facing the human player; misses read as misses, glancing hits visibly bend the nail, the perfect hit resolves flush during rebound, and the operator reaction remains legible. No concrete E6 visual defect was found that warranted another presentation change.
+- The production ten-match resource soak uses the real Duel state machine plus production scene/effects/audio ownership paths through a query-gated test fixture. All **10 complete five-nail matches** passed in Chromium 151 / software WebGL / DPR 0.5. Across every match the renderer remained at **106 geometries and 7 textures**, short audio voices returned to **0**, exactly one ambience loop remained owned, and no music source/buffer existed. The scenario completed in about 49 seconds. This is resource-ownership evidence, not phone GPU or memory-performance evidence.
+- The first naive public-control ten-match soak was intentionally replaced: software-rendered Chromium needed roughly 4–5 minutes per match, so it hit the scenario watchdog after two matches. The replacement keeps the same production model/scene/effects/audio code paths while avoiding thousands of redundant software-rendered targeting frames. Normal public-control match journeys remain covered separately.
 
-Effects reuse one 80-point pool, one ring, one eight-point trail, and a 1,024-byte spark texture. Low tier reduces draw counts. The existing test repeats 1,000 effect updates, checks stable scene objects, equal effects for both actors, reduced motion, and disposal. Audio limits short voices to 16 and owns one ambience loop plus at most one optional music source. The quiet ambience is original filtered noise, not substitute music. Structural/mocked checks are not measured GPU/memory/phone performance.
+GitHub Actions uploads traces, screenshots, recordings, and JSON reports for each matrix scenario. E6-specific scenarios are reproducible with:
 
-## Remaining E6 gates
+    npm run test:e2e -- audio-settings
+    npm run test:e2e -- visual-normal
+    npm run test:e2e -- visual-muted
+    npm run test:e2e -- visual-low
+    npm run test:e2e -- resource-soak
 
-Auditory review/tuning of sound layers and ambience; real music integration when the user supplies a track; complete visual-gate captures and motion review across miss/normal/glance/perfect/operator; ten complete matches with real resource telemetry; physical haptics, Safari and phone performance. No physical-device, auditory-quality, or final E6-completion claim is made. E7 has not started.
+## Resource ownership
+
+Effects reuse one 80-point pool, one ring, one eight-point trail, and one 16×16 soft spark texture; low quality lowers draw counts rather than allocating new systems. Audio owns at most one ambience source, one optional music source, and 16 overlapping short voices. Ended voices disconnect, optional-track failures remain retryable, and disposal releases persistent sources/nodes and decoded-buffer ownership.
+
+The resource-soak fixture is production-built but only mounted when ?soak=1 is explicitly supplied. It is test infrastructure, not part of the player-facing flow. E7 remains responsible for the final Tap-to-Play/title/settings presentation.
+
+## External checks intentionally still pending
+
+These are not represented as automated passes:
+
+- **User-supplied music:** no real track has been provided. Lifecycle behavior is tested with a test-only buffer, but audible integration with the eventual track must be verified after that asset exists.
+- **Subjective audio mix:** automated checks establish synchronization/lifecycle, not whether the ambience/SFX balance sounds ideal on real speakers/headphones.
+- **Physical Safari/haptics/device performance:** no physical iPhone/Android claim is made here. Those hardware/performance checks remain part of the E8/E9 release-validation scope.
+
+Within the available web/automation scope, **E6 is complete. E7 may begin next.**
