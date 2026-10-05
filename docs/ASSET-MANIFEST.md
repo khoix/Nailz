@@ -25,7 +25,7 @@ Geometry/material/shadow/environment resources are owned and disposed by the sce
 
 High (default): sRGB color maps/output, ACES exposure .95, one 1024² shadow map, warm key 3.2, cool hemisphere 1.1, cyan rim 2.2, PMREM intensity .45, DPR capped at 1.75. No fullscreen bloom or postprocessing. Low (`?quality=low`, or scene API): DPR capped at 1, dynamic shadows and distant scenery disabled; hero geometry and aiming coordinates unchanged. A later settings UI can call `setQuality()`.
 
-Static scenery merges by material and bulbs instance together. Prize motion honors reduced motion and paused simulation time. The fixed top-down targeting camera and nail-local radius .115 remain unchanged; the booth camera now frames the marquee and hero together. The hammer's contact face retains its original radius and gameplay timing. Its mesh-end offset is transformed with the swing so the downward head end reaches the sampled contact while the handle extends back toward the wielder.
+Static scenery merges by material and bulbs instance together. Prize motion honors reduced motion and paused simulation time. The fixed top-down targeting camera and nail-local radius .115 remain unchanged; the booth camera now frames the marquee and hero together. The hammer's contact face retains its original radius and gameplay timing. Its mesh-end offset is transformed with the swing so the downward head end reaches the sampled contact while the handle faces the active wielder: front/player for human turns and back/operator for computer turns.
 
 Measured development captures and CPU submission profile are in `docs/validation/e4/`. CPU timing in software-rendered Chromium is not a phone GPU/frame-rate claim. E8 must measure real iPhone/Android performance and tune tiers.
 

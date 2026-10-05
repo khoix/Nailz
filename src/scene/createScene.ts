@@ -177,7 +177,7 @@ export function createScene(canvas: HTMLCanvasElement, textures = new Map<string
       const point = nailLocalToWorld(offset.x, offset.y, headHeight);
       const {lift,angle}=hammerMotion(snapshot);
       if(phase==='SWING')rememberedDepth=snapshot.nail.depth;
-      poseHammer(hammer, point, lift, angle);
+      poseHammer(hammer, point, lift, angle, snapshot.isHuman);
     }
     if (!snapshot.isHuman && phase === 'TARGET_Y') {
       marker.visible = true;

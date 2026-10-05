@@ -33,8 +33,10 @@ export function createHammer(materials: Record<'metal'|'wood'|'grip'|'trim'|'bra
 }
 
 /** Anchor the actual striking face, including its rotated offset, to the sampled contact. */
-export function poseHammer(root: THREE.Object3D, contact: THREE.Vector3, lift: number, angle: number) {
- root.rotation.set(angle, 0, 0);
- root.position.copy(contact).add(new THREE.Vector3(0, lift, -.35 * lift))
+export function poseHammer(root: THREE.Object3D, contact: THREE.Vector3, lift: number, angle: number, isHuman: boolean) {
+ // Human players stand on the camera/front (+Z) side, opposite the operator.
+ // Yaw the complete swing so the handle and backswing both face the active wielder.
+ root.rotation.set(angle, isHuman ? Math.PI : 0, 0, 'YXZ');
+ root.position.copy(contact).add(new THREE.Vector3(0, lift, (isHuman ? 1 : -1) * .35 * lift))
   .sub(HAMMER_FACE.clone().applyQuaternion(root.quaternion));
 }
