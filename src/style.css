@@ -101,3 +101,8 @@ h1 span { color: #ff7770; }
 .title-screen[data-ready=true] .title-progress-meta { color:#ffe6b8; }
 @media (max-height:620px) { .title-screen { padding-top:18px;padding-bottom:18px; }.title-wordmark { font-size:72px; }.title-tagline { margin:14px 0 18px; }.title-loader { padding:14px; } }
 @media (prefers-reduced-motion:reduce) { #load-progress::-webkit-progress-value { transition:none; } }
+
+.title-screen[data-ready=true] .title-progress-meta,
+.title-screen[data-ready=true] #load-progress,
+.title-screen[data-ready=true] #load-detail { display:none; }
+.title-screen[data-ready=true] .title-play { margin-top:0; }
