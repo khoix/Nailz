@@ -6,7 +6,10 @@ import type { NailzScene } from '../scene/createScene.ts';
 export function mountDuel(scene: NailzScene, audio:GameAudio): () => void {
   const app = document.querySelector<HTMLElement>('#app')!;
   const shell = document.createElement('div'); shell.className = 'duel-ui';
-  shell.innerHTML = `<header class="duel-header"><a class="wordmark" aria-label="Nailz">NAILZ<span>!</span></a><span class="duel-format">FIVE NAILS. ONE WINNER.</span><button id="sound" aria-label="Toggle sound">Sound</button><button id="pause" aria-label="Pause duel">Ⅱ</button></header>
+  shell.innerHTML = `<header class="duel-header"><a class="wordmark" aria-label="Nailz">NAILZ<span>!</span></a><span class="duel-format">FIVE NAILS. ONE WINNER.</span><button id="sound" aria-label="Mute sound" title="Mute sound" aria-pressed="false">
+    <svg class="sound-icon sound-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.1a5 5 0 0 1 0 7.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18.9 5.7a8.4 8.4 0 0 1 0 12.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <svg class="sound-icon sound-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="m16 9 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+   </button><button id="pause" aria-label="Pause duel">Ⅱ</button></header>
     <div class="turn-badge"><span class="turn-dot"></span><span id="whose-turn">YOU vs OPERATOR</span><span id="strike-count"></span></div>
     <div id="match-score" class="match-score" aria-live="polite"></div><div class="depth-meter"><label for="depth">NAIL DEPTH <span id="depth-value"></span></label><progress id="depth" max="100" value="16"></progress></div><svg id="aim-overlay" viewBox="-3 -3 6 6" aria-hidden="true"><line class="guide" x1="-3" y1="0" x2="3" y2="0"/><line class="guide" x1="0" y1="-3" x2="0" y2="3"/><circle class="goal" r=".34"/><line id="line-y" class="aim-line" x1="-3" x2="3"/><line id="line-x" class="aim-line" y1="-3" y2="3"/><circle id="hit-dot" r=".065"/><circle id="local-goal" class="goal" r=".34"/><circle id="focus-ring" class="focus-ring"/></svg>
     <section class="duel-prompt"><span id="step-label"></span><h2 id="instruction"></h2><p id="hint"></p><div class="step-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div></section>
@@ -37,7 +40,7 @@ export function mountDuel(scene: NailzScene, audio:GameAudio): () => void {
   function render(dt: number) {
     const s = game.snapshot;
     audio.observe(s);scene.setReducedMotion(audio.settings.reducedMotion);
-    get('sound').textContent=audio.settings.muted?'Sound off':'Sound on';get('sound').setAttribute('aria-pressed',String(!audio.settings.muted));app.dataset.audio=audio.state;
+    const soundButton=get<HTMLButtonElement>('sound');soundButton.dataset.muted=String(audio.settings.muted);soundButton.setAttribute('aria-pressed',String(audio.settings.muted));soundButton.setAttribute('aria-label',audio.settings.muted?'Unmute sound':'Mute sound');soundButton.title=audio.settings.muted?'Unmute sound':'Mute sound';app.dataset.audio=audio.state;
     scene.present(s, s.paused || s.resumeIn > 0 ? 0 : dt);
     app.dataset.phase = s.phase; app.dataset.actor = s.actor;
     const active = !['MATCH_INTRO','ROUND_RESULT','MATCH_RESULT'].includes(s.phase);
