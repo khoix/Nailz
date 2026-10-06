@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import {runScenario} from './browser-harness.mjs';
 await runScenario('asset-loading',5179,async({page,url})=>{
  const fetched=[];page.on('request',r=>{if(r.url().includes('/assets/')&&r.url().includes('.svg'))fetched.push(r.url());});
- const ready=async()=>{await page.locator('#tap-to-play').waitFor();assert.equal(await page.locator('#begin').count(),0,'Main menu must stay gated behind Tap to Play');assert.equal(await page.locator('#load-progress').evaluate(el=>el.value),100);assert.equal(await page.locator('#app').getAttribute('data-startup'),'awaiting-intent');};
+ // The title button is live during loading (E7), so wait for the ready state rather than the button's presence.
+ const ready=async()=>{await page.waitForFunction(()=>document.querySelector('#app')?.dataset.startup==='awaiting-intent');assert.equal(await page.locator('#begin').count(),0,'Main menu must stay gated behind Tap to Play');assert.equal(await page.locator('#load-progress').evaluate(el=>el.value),100);assert.equal(await page.locator('#app').getAttribute('data-startup'),'awaiting-intent');};
  await page.goto(url);await ready();assert.equal(fetched.length,2);
  let keys=await page.evaluate(()=>caches.keys());assert.ok(keys.includes('nailz-assets-e4-1'));
  await page.evaluate(async()=>{await caches.open('nailz-assets-obsolete');await caches.open('unrelated-cache');});

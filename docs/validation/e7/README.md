@@ -12,3 +12,10 @@ E7 is not complete. This checkpoint covers the startup state machine and Tap to 
 
 - Attract scene choreography (camera drift, operator idle performance) and a reduced-motion review of the title; only the CSS marquee chase, prompt glow, and booth show-through exist.
 - Everything else in the E7 prompt. No physical-device claims.
+
+## Continuation 2 (October 6, 00:00 UTC) — settings, records, keyboard, tutorial
+
+- 62 unit tests, typecheck, and production build pass (records store ×4, keyboard power mapping ×1, names ×3 from the prior continuation).
+- New production scenario `interface` (`npm run test:e2e -- interface`), Chromium 151 software WebGL: seeded `nailz-records-v1` shows the Hard solo line and the Pass & Play line as mode/difficulty change and nothing for Normal; the first match in a mode shows the contextual tutorial hints; a keyboard-only strike (Space ×2, Enter, hold/release Space) reaches `SWING` through the normal resolver; the quality select persists `quality:"low"` and is restored after reload; corrupt records JSON leaves the menu working with an empty records line. Result: `interface.json`; captures `records.png`, `keyboard-swing.png`.
+- `asset-loading` and `audio-settings` pass with the corrected ready-state wait (the earlier hosted failure on PR #10 was this race). `local-matches`/`solo-controls` were running under CPU contention at save time; see the handoff for whether they completed.
+- Not covered: visual review of the new card content on a phone, nail-shaped score markers, segmented controls, attract choreography.

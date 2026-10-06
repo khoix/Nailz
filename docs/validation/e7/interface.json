@@ -1,0 +1,11 @@
+{
+  "name": "interface",
+  "browserVersion": "151.0.7922.34",
+  "browserChannel": "custom executable",
+  "deviceScaleFactor": 1,
+  "target": "production dist",
+  "status": "passed",
+  "elapsedMs": 138388,
+  "errors": [],
+  "failure": null
+}

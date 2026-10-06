@@ -14,3 +14,8 @@ export function measureSwipe(points: readonly GesturePoint[], viewportHeight: nu
   const strength = Math.sqrt(Math.min(1, distance / .25) * Math.min(1, distance / Math.max(.025, duration) / 1.15)) * continuity;
   return { valid, power: valid ? Math.max(0, Math.min(1, strength)) : 0, distance, duration };
 }
+/** Keyboard swing: hold-and-release duration maps to requested power on the same 0..1 scale as a swipe; the reticle cap still applies in the resolver. A quick press is a deliberately weak hit; a half-second hold reaches full power. */
+export function keyboardSwingPower(holdSeconds: number): number {
+  if (!Number.isFinite(holdSeconds) || holdSeconds < 0) return 0;
+  return Math.max(.3, Math.min(1, .3 + holdSeconds / .5 * .7));
+}
