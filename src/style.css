@@ -110,3 +110,17 @@ h1 span { color: #ff7770; }
 .title-screen[data-ready=true] #load-progress,
 .title-screen[data-ready=true] #load-detail { display:none; }
 .title-screen[data-ready=true] .title-play { margin-top:0; }
+/* E7 attract shell: marquee bulb chase and pulsing prompt need no loaded assets. Reduced motion keeps steady framing. */
+.title-screen::before { animation:marquee-chase 1.6s steps(2) infinite; }
+/* Once the booth is prepared it shows through the title as the live attract backdrop. */
+.title-screen[data-ready=true] { background:linear-gradient(180deg,#11122255 0%,#17162a88 54%,#0b1722cc 100%); }
+.title-play:not([disabled]) { animation:prompt-pulse 1.5s ease-in-out infinite; }
+.title-play[disabled] { opacity:.78;background:#e0b57a;cursor:progress;justify-content:center; }
+@keyframes marquee-chase { 0% { background-position:0 0; } 100% { background-position:54px 0; } }
+/* Glow only: no layout/transform change, so the button stays stable for taps and automation. */
+@keyframes prompt-pulse { 0%,100% { box-shadow:0 0 0 1px #ffd89b28,0 10px 32px #ff9c6650; } 50% { box-shadow:0 0 0 3px #ffd89b66,0 14px 44px #ff9c66a0; } }
+@media (prefers-reduced-motion:reduce) { .title-screen::before,.title-play { animation:none; } }
+.name-controls { display:grid;gap:6px;margin:8px 0; }.name-controls label small { color:#9a90a8;font-weight:500; }.name-controls input { width:100%;box-sizing:border-box;border:1px solid #ffffff2a;border-radius:8px;padding:10px 12px;background:#0f1324;color:#fff1d9;font:inherit;font-size:14px; }
+.records-line { min-height:16px;margin:4px 0 10px;color:#ffd79a;font-size:11px;font-weight:700;letter-spacing:.02em; }.records-line:empty { display:none; }
+.credits { margin-top:10px;text-align:left; }.credits summary { cursor:pointer;color:#9a90a8;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase; }.credits p { font-size:11px;color:#aaa2b6;margin:6px 0 0; }.credits a { color:#ffd79a; }
+.duel-prompt[data-tutorial=true] p { color:#ffe6b8;font-size:12.5px;line-height:1.45;max-width:34ch;margin:0 auto; }#how-to-play ol { margin:6px 0 4px;padding-left:18px;font-size:11px;color:#c9bfd4;line-height:1.5; }#how-to-play li+li { margin-top:3px; }#how-to-play p { font-size:11px;color:#aaa2b6;margin:6px 0 0; }#tutorial-replay { margin:4px 0 0;padding:8px 0;color:#ffd79a; }

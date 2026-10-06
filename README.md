@@ -1,6 +1,6 @@
 # Nailz!
 
-A mobile-first precision hammering arcade game. **Current milestone: E5 operator and physical animation** — solo versus four operator difficulties, or two-player pass-and-play on one phone. Timing controls, animated contact, scoring, rematches, and protected handoffs are playable. The booth, hero props, lighting, and asset cache are implemented; the articulated operator and hammer motion are implemented; effects and final title/menus remain later milestones.
+A mobile-first precision hammering arcade game. **Current milestone: E7 interface and onboarding (in progress)** — solo versus four operator difficulties, or two-player pass-and-play on one phone. Timing controls, animated contact, scoring, rematches, protected handoffs, the booth and hero props, the articulated operator, impact effects, and gesture audio are implemented. The Tap to Play title flow is complete; final menus, names, tutorial, records, and HUD polish are still being built.
 
 ## Run
 
@@ -38,7 +38,9 @@ Music will be supplied by the user later. `MUSIC` remains null; no generated or 
 
 ## Continue
 
-Read `docs/AI-NAILZ-HANDOFF.md`, then the relevant execution in `docs/NAILZ-BUILD-PLAN.md`. Preserve the same branch. The plan contains the complete scope, visual direction, and acceptance criteria. Match orchestration, four AI input presets, and pass-and-play are implemented. E6 is the impact-effects/audio milestone; verify the current CI gate before starting it.
+Read `docs/AI-NAILZ-HANDOFF.md`, then the relevant execution in `docs/NAILZ-BUILD-PLAN.md`. Preserve the same branch (`fable51/nailz-arcade-build` for E7). The plan contains the complete scope, visual direction, and acceptance criteria. E7 (interface and onboarding) is in progress: the Tap to Play title flow is complete; see the handoff for the remaining ordered work. Verify the current CI gate before continuing.
+
+The title button is live while assets load: an early tap records intent and activates audio, shows **Getting ready…**, and enters mode selection automatically once; a late tap or keyboard activation enters once. Loading completion never enters or plays sound by itself. `npm run test:e2e -- title-flow` covers this in production.
 
 ## Browser smoke check
 

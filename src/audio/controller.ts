@@ -3,11 +3,13 @@ import { ActionEvents, impactStyle } from '../effects/events.ts';
 import type { Preloader } from '../assets/loader.ts';
 import { ASSET_CACHE_VERSION } from '../assets/version.ts';
 import { MUSIC, type MusicConfig } from './config.ts';
-export interface AudioSettings { effects:number; music:number; muted:boolean; haptics:boolean; reducedMotion:boolean }
+export type QualityTier='high'|'low';
+/** Player settings persisted under nailz-settings-v1; quality was added in E7 as an optional field (older saves default to high). */
+export interface AudioSettings { effects:number; music:number; muted:boolean; haptics:boolean; reducedMotion:boolean; quality:QualityTier }
 export function readSettings(storage?:Pick<Storage,'getItem'>):AudioSettings {
- const defaults={effects:.65,music:.45,muted:false,haptics:false,reducedMotion:false};
- try {const s=JSON.parse(storage?.getItem('nailz-settings-v1')??'null');if(!s)return defaults;
-  return {...defaults,...Object.fromEntries(['muted','haptics','reducedMotion'].map(k=>[k,typeof s[k]==='boolean'?s[k]:false])),effects:Number.isFinite(s.effects)?Math.max(0,Math.min(1,s.effects)):.65,music:Number.isFinite(s.music)?Math.max(0,Math.min(1,s.music)):.45};
+ const defaults:AudioSettings={effects:.65,music:.45,muted:false,haptics:false,reducedMotion:false,quality:'high'};
+ try {const s=JSON.parse(storage?.getItem('nailz-settings-v1')??'null');if(!s||typeof s!=='object')return defaults;
+  return {...defaults,...Object.fromEntries(['muted','haptics','reducedMotion'].map(k=>[k,typeof s[k]==='boolean'?s[k]:false])),effects:Number.isFinite(s.effects)?Math.max(0,Math.min(1,s.effects)):.65,music:Number.isFinite(s.music)?Math.max(0,Math.min(1,s.music)):.45,quality:s.quality==='low'?'low':'high'};
  }catch{return defaults;}
 }
 export function createAudio(loader:Preloader, music:MusicConfig|null=MUSIC) {

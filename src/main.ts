@@ -5,6 +5,7 @@ import { mountDuel } from './ui/duelUI.ts';
 import { Preloader, decodeImage } from './assets/loader.ts';
 import { createAudio } from './audio/controller.ts';
 import { BOOTH_MANIFEST } from './assets/manifest.ts';
+import { advanceStartup, createStartup, enterMenu, startupLabel, type StartupEvent } from './game/startup.ts';
 
 const canvas=document.querySelector<HTMLCanvasElement>('#scene')!;
 const app=document.querySelector<HTMLElement>('#app')!;
@@ -26,7 +27,7 @@ if(bypassTitle){
     <div class="title-progress-meta"><span id="load-stage">Loading carnival…</span><span id="load-percent">0%</span></div>
     <progress id="load-progress" max="100" value="0" aria-label="Game loading progress"></progress>
     <p id="load-detail">Setting up the booth.</p>
-    <button id="tap-to-play" class="play-button title-play" hidden>Tap to Play <span>↗</span></button>
+    <button id="tap-to-play" class="play-button title-play">Tap to Play <span>↗</span></button>
     <button id="load-retry" class="quiet-button" hidden>Retry loading</button>
    </div>
   </div>`;
@@ -39,8 +40,10 @@ app.style.visibility='visible';
 let storage:CacheStorage|undefined;try{storage=window.caches;}catch{}
 const loader=new Preloader(storage),textures=new Map<string,THREE.Texture>();
 const audio=createAudio(loader);
-let scene:NailzScene|undefined,cleanup:(()=>void)|undefined,busy=false,ready=false,entered=false,disposed=false;
+let scene:NailzScene|undefined,cleanup:(()=>void)|undefined,busy=false,disposed=false;
+let state=createStartup(),mounted=false;
 const abort=new AbortController();
+const entered=()=>state.entered;
 
 function setProgress(value:number,stage:string,detail:string){
  startup.querySelector<HTMLElement>('#load-stage')!.textContent=stage;
@@ -48,14 +51,23 @@ function setProgress(value:number,stage:string,detail:string){
  const bar=startup.querySelector<HTMLProgressElement>('#load-progress');if(bar)bar.value=value;
  const percent=startup.querySelector<HTMLElement>('#load-percent');if(percent)percent.textContent=`${Math.round(value)}%`;
 }
+/** Apply one startup event, reflect the pure state in the DOM, and enter the menu at most once. */
+function dispatch(event:StartupEvent){
+ state=enterMenu(advanceStartup(state,event));
+ const label=startupLabel(state);
+ startup.dataset.ready=String(state.assetsReady);startup.dataset.intent=String(state.playRequested);
+ const tap=startup.querySelector<HTMLButtonElement>('#tap-to-play');
+ if(tap){tap.hidden=label==='failed';tap.disabled=label==='getting-ready';tap.setAttribute('aria-busy',String(label==='getting-ready'));tap.innerHTML=label==='getting-ready'?'Getting ready…':'Tap to Play <span>↗</span>';}
+ app.dataset.startup=label==='entered'?'playing':label==='failed'?'load-failed':label==='tap'?'awaiting-intent':label==='getting-ready'?'getting-ready':'loading';
+ if(label==='entered'&&!mounted){mounted=true;if(bypassTitle)mountPreparedExperience();else mountGame();}
+}
 function showFailure(){
- ready=false;app.dataset.loading='failed';app.dataset.startup='load-failed';
+ app.dataset.loading='failed';
  setProgress(0,'The booth couldn’t load.','Check your connection and try again.');
  startup.querySelector<HTMLButtonElement>('#load-retry')!.hidden=false;
- const tap=startup.querySelector<HTMLButtonElement>('#tap-to-play');if(tap)tap.hidden=true;
 }
 function mountPreparedExperience(){
- if(!scene||entered||disposed)return;entered=true;
+ if(!scene||disposed)return;
  if(params.has('soak')){
   document.querySelector('.masthead')?.remove();document.querySelector('.scene-caption')?.remove();
   void import('./dev/resourceSoak.ts').then(({mountResourceSoak})=>{if(!disposed)cleanup=mountResourceSoak(scene!,audio);});
@@ -64,17 +76,21 @@ function mountPreparedExperience(){
  }
  startup.remove();
 }
-function enterGame(){
- if(!ready||!scene||entered||disposed)return;
- audio.activate();
- entered=true;app.dataset.startup='playing';
+function mountGame(){
+ if(!scene||disposed)return;
  cleanup=mountDuel(scene,audio);
  startup.remove();
 }
+/** The title button is live during loading: record intent and activate audio inside the gesture. Entry happens when assets are ready. */
+function requestPlay(){
+ if(entered()||disposed)return;
+ audio.activate();dispatch({type:'audio',result:audio.state==='running'?'active':audio.state==='locked'?'blocked':'activating'});
+ dispatch({type:'play'});
+}
 async function prepare(){
- if(busy||disposed)return;busy=true;ready=false;app.dataset.loading='fetching';app.dataset.startup='loading';
+ if(busy||disposed)return;busy=true;app.dataset.loading='fetching';
  startup.querySelector<HTMLButtonElement>('#load-retry')!.hidden=true;
- const tap=startup.querySelector<HTMLButtonElement>('#tap-to-play');if(tap)tap.hidden=true;
+ dispatch({type:'retry'});
  setProgress(0,'Loading carnival…','Setting up the booth.');
  try{
   await loader.prepare(BOOTH_MANIFEST,p=>{
@@ -95,16 +111,20 @@ async function prepare(){
   setProgress(88,'Warming up the booth…','Almost there…');
   scene=createScene(canvas,textures);await scene.prepare();
   if(disposed){scene.dispose();return;}
+  scene.setView('booth');
   setProgress(96,'Almost ready…','');
   await loader.ready(BOOTH_MANIFEST);
-  ready=true;app.dataset.loading='ready';setProgress(100,'','');
-  if(bypassTitle)mountPreparedExperience();
-  else{app.dataset.startup='awaiting-intent';startup.dataset.ready='true';startup.querySelector<HTMLButtonElement>('#tap-to-play')!.hidden=false;}
- }catch(error){console.warn('Booth preparation failed',error);scene?.dispose();scene=undefined;showFailure();}
+  app.dataset.loading='ready';setProgress(100,'','');
+  if(bypassTitle)dispatch({type:'play'});
+  dispatch({type:'assetsReady'});
+ }catch(error){console.warn('Booth preparation failed',error);scene?.dispose();scene=undefined;dispatch({type:'assetError',message:String(error)});showFailure();}
  finally{busy=false;}
 }
 startup.querySelector<HTMLButtonElement>('#load-retry')!.addEventListener('click',prepare);
-startup.querySelector<HTMLButtonElement>('#tap-to-play')?.addEventListener('click',enterGame);
+// Native button click covers pointer taps and Enter/Space keyboard activation. Click fires after pointerup,
+// so the title gesture is already finished before the menu's pointer listeners mount.
+startup.querySelector<HTMLButtonElement>('#tap-to-play')?.addEventListener('click',requestPlay);
+dispatch({type:'retry'});
 void prepare();
 
 import.meta.hot?.dispose(()=>{disposed=true;abort.abort();cleanup?.();scene?.dispose();textures.forEach(t=>t.dispose());audio.dispose();loader.dispose();startup.remove();});

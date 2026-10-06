@@ -1,6 +1,8 @@
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 const scenarios=[
+ {name:'title-flow',script:'tests/title-browser.mjs',args:[]},
+ {name:'interface',script:'tests/interface-browser.mjs',args:[]},
  {name:'audio-settings',script:'tests/audio-browser.mjs',args:[]},
  {name:'asset-loading',script:'tests/loading-browser.mjs',args:[]},
  {name:'solo-controls',script:'tests/duel-browser.mjs',args:[]},

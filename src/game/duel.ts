@@ -1,7 +1,7 @@
 import { applyStrike, createNail, resolveStrike, straightenNail } from './strike.ts';
 import { createRandom } from './random.ts';
 import { sampleAI } from './ai.ts';
-import { createMatch, otherParticipant } from './state.ts';
+import { createMatch, otherParticipant, type ParticipantNames } from './state.ts';
 import { INPUT_TUNING } from './tuning.ts';
 import type { Difficulty, GameMode, Participant, GamePhase, NailState, ParticipantId, StrikeInput, StrikeResult, Vec2 } from './types.ts';
 export const DUEL_TIMING = Object.freeze({ setup: .4, ready: .36, contact: .24, impact: .7, straighten: .45, operatorAim: .85, resume: .8, tapGuard: .12 });
@@ -11,7 +11,7 @@ export function focusQuality(seconds: number): number {
   const timingError = Math.abs(seconds - 1.5 / 2.15);
   return Math.max(0, 1 - Math.max(0, timingError - .035) / .3);
 }
-export interface DuelOptions { mode?: GameMode; difficulty?: Difficulty; firstStarter?: ParticipantId }
+export interface DuelOptions { mode?: GameMode; difficulty?: Difficulty; firstStarter?: ParticipantId; names?: ParticipantNames }
 export interface DuelSnapshot {
   readonly mode: GameMode;
   readonly difficulty: Difficulty;
@@ -64,7 +64,7 @@ export class Duel {
   constructor(seed = 9271, options: DuelOptions = {}) {
     this.random = createRandom(seed);
     this.mode = options.mode ?? 'solo'; this.difficulty = options.difficulty ?? 'normal';
-    this.participants = createMatch(this.mode).participants;
+    this.participants = createMatch(this.mode, 'p1', options.names).participants;
     this.firstStarter = options.firstStarter ?? (this.random() < .5 ? 'p1' : 'p2');
     this.actor = this.firstStarter;
   }

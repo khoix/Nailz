@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { applyStrike, createNail, resolveStrike, straightenNail } from '../src/game/strike.ts';
 import { STRIKE_TUNING } from '../src/game/tuning.ts';
 import type { StrikeInput } from '../src/game/types.ts';
+import { keyboardSwingPower } from '../src/input/swipe.ts';
 const perfect: StrikeInput = { actor: 'p1', offset: { x: 0, y: 0 }, reticleQuality: 1, swipePower: 1 };
 const strike = (changes: Partial<StrikeInput> = {}) => resolveStrike(createNail(), { ...perfect, ...changes });
 test('perfect fresh strike is a one-hit finish in a reachable radius', () => {
@@ -76,4 +77,10 @@ test('center hit has no lateral force and non-finishing contact conserves force'
   assert.equal(strike().lateralForce, 0);
   const result = strike({ offset: { x: 0.8, y: 0 } });
   assert.ok(Math.abs(result.downwardForce + result.lateralForce - result.usablePower) < 1e-12);
+});
+test('keyboard swing power is monotonic, weak-floored, and capped at the swipe scale', () => {
+  assert.equal(keyboardSwingPower(0), .3);
+  assert.ok(keyboardSwingPower(.2) > keyboardSwingPower(.05));
+  assert.equal(keyboardSwingPower(.5), 1); assert.equal(keyboardSwingPower(3), 1);
+  assert.equal(keyboardSwingPower(Number.NaN), 0);
 });
