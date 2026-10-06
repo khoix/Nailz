@@ -122,5 +122,14 @@ h1 span { color: #ff7770; }
 @media (prefers-reduced-motion:reduce) { .title-screen::before,.title-play { animation:none; } }
 .name-controls { display:grid;gap:6px;margin:8px 0; }.name-controls label small { color:#9a90a8;font-weight:500; }.name-controls input { width:100%;box-sizing:border-box;border:1px solid #ffffff2a;border-radius:8px;padding:10px 12px;background:#0f1324;color:#fff1d9;font:inherit;font-size:14px; }
 .records-line { min-height:16px;margin:4px 0 10px;color:#ffd79a;font-size:11px;font-weight:700;letter-spacing:.02em; }.records-line:empty { display:none; }
-.credits { margin-top:10px;text-align:left; }.credits summary { cursor:pointer;color:#9a90a8;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase; }.credits p { font-size:11px;color:#aaa2b6;margin:6px 0 0; }.credits a { color:#ffd79a; }
-.duel-prompt[data-tutorial=true] p { color:#ffe6b8;font-size:12.5px;line-height:1.45;max-width:34ch;margin:0 auto; }#how-to-play ol { margin:6px 0 4px;padding-left:18px;font-size:11px;color:#c9bfd4;line-height:1.5; }#how-to-play li+li { margin-top:3px; }#how-to-play p { font-size:11px;color:#aaa2b6;margin:6px 0 0; }#tutorial-replay { margin:4px 0 0;padding:8px 0;color:#ffd79a; }
+.menu-links { display:flex;justify-content:center;gap:4px; }.menu-links .quiet-button { margin-top:4px; }
+/* How to play: a centered modal card in the same enamel-panel style as the pause card. */
+.howto-card { top:50%;bottom:auto;transform:translate(-50%,-50%);max-height:88svh;overflow:auto;box-shadow:0 0 0 100vmax #0c0e1abb;text-align:left; }
+.howto-card .eyebrow,.howto-card h2 { text-align:center;display:block; }
+.howto-steps { list-style:none;margin:18px 0 14px;padding:0;display:grid;gap:11px; }
+.howto-steps li { display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start; }
+.howto-steps b { color:#f4ba77;font-size:11px;font-weight:900;letter-spacing:.18em;padding-top:3px; }
+.howto-steps span { color:#bcb2c9;font-size:12.5px;line-height:1.5; }.howto-steps strong { color:#fff1d9; }
+.howto-card p { font-size:12px;line-height:1.55;margin:0 0 10px;padding:0 2px; }.howto-card .howto-pass { color:#d8cad8;border-top:1px solid #ffffff18;padding-top:10px;margin-top:4px; }
+.howto-card .howto-pass strong,.howto-card p strong { color:#ffd79a; }.howto-card .play-button { margin-top:8px; }
+@media (orientation:landscape) and (max-height:550px) { .howto-card { left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(520px,92%); }.howto-steps { grid-template-columns:1fr 1fr;gap:8px 16px; } }

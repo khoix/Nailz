@@ -5,7 +5,7 @@
   "deviceScaleFactor": 1,
   "target": "production dist",
   "status": "passed",
-  "elapsedMs": 138388,
+  "elapsedMs": 77601,
   "errors": [],
   "failure": null
 }
