@@ -14,7 +14,8 @@ export function mountDuel(scene: NailzScene, audio:GameAudio): () => void {
     <div class="turn-badge"><span class="turn-dot"></span><span id="whose-turn">YOU vs OPERATOR</span><span id="strike-count"></span></div>
     <div id="match-score" class="match-score" aria-live="polite"></div><div class="depth-meter"><label for="depth">NAIL DEPTH <span id="depth-value"></span></label><progress id="depth" max="100" value="16"></progress></div><svg id="aim-overlay" viewBox="-3 -3 6 6" aria-hidden="true"><line class="guide" x1="-3" y1="0" x2="3" y2="0"/><line class="guide" x1="0" y1="-3" x2="0" y2="3"/><circle class="goal" r=".34"/><line id="line-y" class="aim-line" x1="-3" x2="3"/><line id="line-x" class="aim-line" y1="-3" y2="3"/><circle id="hit-dot" r=".065"/><circle id="local-goal" class="goal" r=".34"/><circle id="focus-ring" class="focus-ring"/></svg>
     <section class="duel-prompt"><span id="step-label"></span><h2 id="instruction"></h2><p id="hint"></p><div class="step-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div></section>
-    <section id="duel-card" class="duel-card"><span class="eyebrow">STEP RIGHT UP</span><h2>Make the<br>last hit yours.</h2><p>Line it up. Find your focus.<br>Swipe down and drive it home.</p><div id="mode-controls"><label for="mode">Game mode</label><select id="mode"><option value="solo">Solo — vs. Operator</option><option value="pass-and-play">2 Players — Pass & Play</option></select><div id="name-controls" class="name-controls" hidden><label for="name-p1">Player 1 name <small>(optional)</small></label><input id="name-p1" type="text" maxlength="12" autocomplete="off" placeholder="Player 1"><label for="name-p2">Player 2 name <small>(optional)</small></label><input id="name-p2" type="text" maxlength="12" autocomplete="off" placeholder="Player 2"></div><label id="difficulty-label" for="difficulty">Operator difficulty</label><select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option><option value="champion">Champion</option></select></div><p id="records-line" class="records-line" aria-live="polite"></p><details id="how-to-play" class="credits"><summary>How to play</summary><ol><li>Tap to stop the moving line on the nail's center. Twice: height, then side.</li><li>Tap when the shrinking ring matches the glowing one. That sets your power ceiling.</li><li>Swipe down fast. Centered hits drive deep; off-center hits bend the nail.</li><li>The striker who sinks the nail flush wins it. Five nails, most nails wins.</li></ol><p id="how-to-pass">Pass &amp; Play: hand the phone over, and only the next player taps <strong>I'm ready</strong>.</p><button id="tutorial-replay" class="quiet-button" type="button">Show tips during my next match</button></details><button id="begin" class="play-button">Start match <span>↗</span></button><button id="choose-mode" class="quiet-button" hidden>Change mode</button><details id="credits" class="credits"><summary>Credits</summary><p>Original art, animation, and synthesized sound made for Nailz!. Rendering by <a href="https://threejs.org" rel="noopener" target="_blank">Three.js</a> (MIT). No third-party music is bundled. Settings and records stay on this device.</p></details></section>
+    <section id="duel-card" class="duel-card"><span class="eyebrow">STEP RIGHT UP</span><h2>Make the<br>last hit yours.</h2><p>Line it up. Find your focus.<br>Swipe down and drive it home.</p><div id="mode-controls"><label for="mode">Game mode</label><select id="mode"><option value="solo">Solo — vs. Operator</option><option value="pass-and-play">2 Players — Pass & Play</option></select><div id="name-controls" class="name-controls" hidden><label for="name-p1">Player 1 name <small>(optional)</small></label><input id="name-p1" type="text" maxlength="12" autocomplete="off" placeholder="Player 1"><label for="name-p2">Player 2 name <small>(optional)</small></label><input id="name-p2" type="text" maxlength="12" autocomplete="off" placeholder="Player 2"></div><label id="difficulty-label" for="difficulty">Operator difficulty</label><select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option><option value="champion">Champion</option></select></div><p id="records-line" class="records-line" aria-live="polite"></p><button id="begin" class="play-button">Start match <span>↗</span></button><div class="menu-links"><button id="how-to-play" class="quiet-button" type="button">How to play</button><button id="choose-mode" class="quiet-button" hidden>Change mode</button></div></section>
+    <section id="howto-card" class="duel-card howto-card" role="dialog" aria-modal="true" aria-labelledby="howto-title" hidden><span class="eyebrow">STEP RIGHT UP</span><h2 id="howto-title">How to play</h2><ol class="howto-steps"><li><b>01</b><span><strong>Lock the height.</strong> A line sweeps up and down. Tap when it crosses the nail’s center.</span></li><li><b>02</b><span><strong>Lock the side.</strong> Same again, left to right. Where the lines cross is where the hammer lands.</span></li><li><b>03</b><span><strong>Find your focus.</strong> A ring shrinks once. Tap as it meets the glowing ring to unlock full power.</span></li><li><b>04</b><span><strong>Swipe down.</strong> Fast and long drives deep. Off-center hits bend the nail.</span></li></ol><p>Sink the nail flush to win it. Five shared nails; most nails wins the match.</p><p class="howto-pass"><strong>Pass &amp; Play:</strong> hand the phone over. Only the next player taps <strong>I’m ready</strong>.</p><button id="howto-close" class="play-button">Got it <span>↗</span></button></section>
     <section id="handoff-card" class="duel-card" hidden><span class="eyebrow">PASS & PLAY</span><h2 id="handoff-title"></h2><p>Keep the phone upright. Take your time.<br>Only the next player should tap below.</p><button id="ready" class="play-button">I’m ready</button><small>Lift every finger before starting your turn.</small></section>
     <section id="pause-card" class="duel-card" hidden><span class="eyebrow">TAKE YOUR TIME</span><h2>Paused.</h2><p>Your aim and timing are saved.</p><fieldset class="audio-settings"><legend>Sound & motion</legend><label>Effects <input id="effects-volume" type="range" min="0" max="1" step=".05"></label><label>Music <input id="music-volume" type="range" min="0" max="1" step=".05"></label><label><input id="haptics-setting" type="checkbox"> Haptics (if supported)</label><label><input id="motion-setting" type="checkbox"> Reduced motion</label><label for="quality-setting">Graphics quality</label><select id="quality-setting"><option value="high">High</option><option value="low">Low (longer battery)</option></select></fieldset><button id="resume" class="play-button">Resume match</button><button id="restart" class="quiet-button">Restart match</button></section>
     <div id="result-flash" role="status" aria-live="polite"></div>`;
@@ -32,7 +33,9 @@ export function mountDuel(scene: NailzScene, audio:GameAudio): () => void {
   let restartCount = 0;
   let localStorageRef:Storage|undefined;try{localStorageRef=localStorage;}catch{}
   const records=createRecordsStore(localStorageRef);
-  let humanStrikes=0,humanOneHits=0,recordedMatch=false,tutorialActive=false,tutorialForced=false;
+  let humanStrikes=0,humanOneHits=0,recordedMatch=false;
+  // How to play is a modal over the main menu, opened on demand. It never appears mid-match.
+  let howtoOpen=false;
   const resetMatchStats=()=>{humanStrikes=0;humanOneHits=0;recordedMatch=false;};
   function recordsLine(mode:GameMode,difficulty:Difficulty):string {
     const r=records.current;
@@ -61,7 +64,6 @@ export function mountDuel(scene: NailzScene, audio:GameAudio): () => void {
     get('strike-count').textContent = `NAIL ${s.round}/5`;
     get<HTMLProgressElement>('depth').value=s.nail.depth/s.nail.length*100;get('depth-value').textContent=`${Math.round(s.nail.depth/s.nail.length*100)}%`;
     get('match-score').textContent = `${name('p1')}  ${s.nailsWon.p1} — ${s.nailsWon.p2}  ${name('p2')}  ·  ${s.points.p1} / ${s.points.p2} pts`;
-    get('duel-card').toggleAttribute('hidden', active);
     get('mode-controls').toggleAttribute('hidden', s.phase !== 'MATCH_INTRO');
     get('choose-mode').toggleAttribute('hidden', s.phase !== 'MATCH_RESULT');
     get('handoff-card').toggleAttribute('hidden', s.phase !== 'TURN_HANDOFF' || s.paused);
@@ -78,7 +80,7 @@ export function mountDuel(scene: NailzScene, audio:GameAudio): () => void {
         card.querySelector('p')!.textContent=`Nail ${s.round} of 5 · ${s.nail.strikeCount} strikes. Every nail counts.`;
         get('begin').textContent=s.round===5?'Match results ↗':'Next nail ↗';
       } else if (s.phase === 'MATCH_RESULT') {
-        if(!recordedMatch){recordedMatch=true;records.update(r=>({...recordMatch(r,{mode:s.mode,difficulty:s.difficulty,winner:s.winner!,nailsWon:{...s.nailsWon},points:{...s.points},humanStrikes,humanOneHits}),tutorialSeen:{...r.tutorialSeen,[s.mode]:true}}));tutorialActive=false;tutorialForced=false;}
+        if(!recordedMatch){recordedMatch=true;records.update(r=>recordMatch(r,{mode:s.mode,difficulty:s.difficulty,winner:s.winner!,nailsWon:{...s.nailsWon},points:{...s.points},humanStrikes,humanOneHits}));}
         card.querySelector('h2')!.textContent=`${name(s.winner!)} wins!`;
         card.querySelector('p')!.textContent=`${s.nailsWon.p1}–${s.nailsWon.p2} nails · ${s.points.p1}–${s.points.p2} performance points. Nails decide the winner.`;
         get('begin').textContent='Rematch ↗';
@@ -89,15 +91,16 @@ export function mountDuel(scene: NailzScene, audio:GameAudio): () => void {
     if (s.resumeIn > 0) { title = 'Get ready…'; hint = 'Your turn picks up exactly where you left it.'; }
     else if (s.phase === 'NAIL_SETUP') { title = 'Line it up'; hint = 'Center the two lines on the nail head.'; }
     else if (!s.isHuman && s.phase === 'TARGET_Y') { title = 'Sizing it up…'; hint = 'Watch the operator’s contact point.'; label = 'OPERATOR'; }
-    else if (s.phase === 'TARGET_Y') { title = 'Tap to lock height'; hint = tutorialActive ? 'First, the height. The line sweeps up and down; tap anywhere when it crosses the nail’s center guide.' : 'Stop the moving line on the center guide.'; label = '01 / POSITION'; }
-    else if (s.phase === 'TARGET_X') { title = 'Tap to lock the side'; hint = tutorialActive ? 'Now the side. Where the two lines cross is where the hammer lands. Off-center bends the nail.' : 'Bring the two lines together at the center.'; label = '02 / POSITION'; }
-    else if (s.phase === 'RETICLE') { title = 'Tap when the rings match'; hint = tutorialActive ? 'The ring shrinks once. Tap as it meets the glowing ring to unlock full power.' : 'One pass. Make it count.'; label = '03 / FOCUS'; }
-    else if (s.phase === 'READY_TO_SWING') { title = s.elapsed >= DUEL_TIMING.ready ? 'SWIPE DOWN!' : 'Raise the hammer…'; hint = tutorialActive ? 'Swipe straight down, fast and long. A timid swipe is a timid hit. Keyboard: hold Space, then release.' : 'A fast, decisive swipe brings the power. Keyboard: hold Space, then release.'; label = '04 / SWING'; }
+    else if (s.phase === 'TARGET_Y') { title = 'Tap to lock height'; hint = 'Stop the moving line on the center guide.'; label = '01 / POSITION'; }
+    else if (s.phase === 'TARGET_X') { title = 'Tap to lock the side'; hint = 'Bring the two lines together at the center.'; label = '02 / POSITION'; }
+    else if (s.phase === 'RETICLE') { title = 'Tap when the rings match'; hint = 'One pass. Make it count.'; label = '03 / FOCUS'; }
+    else if (s.phase === 'READY_TO_SWING') { title = s.elapsed >= DUEL_TIMING.ready ? 'SWIPE DOWN!' : 'Raise the hammer…'; hint = 'A fast, decisive swipe brings the power.'; label = '04 / SWING'; }
     else if (s.phase === 'NAIL_STRAIGHTEN') { title = 'Straightening up'; hint = 'Depth stays. The next striker gets a straight nail.'; }
     else if (s.phase === 'IMPACT_RESOLUTION' || s.phase === 'SWING') { title = s.isHuman ? 'Make it count.' : 'Here comes the operator.'; }
     get('instruction').textContent = title; get('hint').textContent = hint; get('step-label').textContent = label;
-    const prompt=shell.querySelector<HTMLElement>('.duel-prompt')!;prompt.hidden = !active || s.paused || s.phase === 'TURN_HANDOFF';prompt.dataset.tutorial=String(tutorialActive);
-    shell.querySelector<HTMLElement>('#handoff-card p')!.textContent = tutorialActive && s.mode==='pass-and-play' ? 'Pass the phone. Lift every finger first; only the next player taps I’m ready, and that tap never aims.' : 'Keep the phone upright. Take your time.\nOnly the next player should tap below.';
+    shell.querySelector<HTMLElement>('.duel-prompt')!.hidden = !active || s.paused || s.phase === 'TURN_HANDOFF';
+    const showHowto=howtoOpen&&s.phase==='MATCH_INTRO';
+    get('howto-card').toggleAttribute('hidden',!showHowto);get('duel-card').toggleAttribute('hidden',active||showHowto);
     const steps = ['TARGET_Y','TARGET_X','RETICLE','READY_TO_SWING'];
     shell.querySelectorAll<HTMLElement>('.step-dots i').forEach((dot,i)=>dot.classList.toggle('lit', i <= steps.indexOf(s.phase) && s.isHuman));
     const overlay = get<SVGSVGElement>('aim-overlay');
@@ -174,14 +177,15 @@ export function mountDuel(scene: NailzScene, audio:GameAudio): () => void {
     const button=(event.target as HTMLElement).closest('button');if(!button)return;audio.activate();sync();interruptInput();
     if(button.id==='sound')audio.update({muted:!audio.settings.muted});
     if(button.id==='begin') {
-      if(game.snapshot.phase==='MATCH_INTRO') { game=new Duel(Date.now()+ ++restartCount,{mode:get<HTMLSelectElement>('mode').value as GameMode,difficulty:get<HTMLSelectElement>('difficulty').value as Difficulty,names:{p1:get<HTMLInputElement>('name-p1').value,p2:get<HTMLInputElement>('name-p2').value}});resetMatchStats();tutorialActive=tutorialForced||!records.current.tutorialSeen[game.snapshot.mode];game.start(); }
+      if(game.snapshot.phase==='MATCH_INTRO') { game=new Duel(Date.now()+ ++restartCount,{mode:get<HTMLSelectElement>('mode').value as GameMode,difficulty:get<HTMLSelectElement>('difficulty').value as Difficulty,names:{p1:get<HTMLInputElement>('name-p1').value,p2:get<HTMLInputElement>('name-p2').value}});resetMatchStats();game.start(); }
       else if(game.snapshot.phase==='ROUND_RESULT')game.advanceRound();
       else if(game.snapshot.phase==='MATCH_RESULT'){resetMatchStats();game.restart(Date.now()+ ++restartCount);}
     }
     if(button.id==='choose-mode' && game.snapshot.phase==='MATCH_RESULT') { game=new Duel(Date.now());previousPhase='';resetMatchStats(); }
     // Keyboard activation is also a fresh action, provided no finger remains on the screen.
     if(button.id==='ready' && event.detail===0 && activePointers.size===0)game.ready();
-    if(button.id==='tutorial-replay'){tutorialForced=true;button.textContent='Tips will show during your next match';}
+    if(button.id==='how-to-play'&&game.snapshot.phase==='MATCH_INTRO')howtoOpen=true;
+    if(button.id==='howto-close')howtoOpen=false;
     if(button.id==='pause')game.pause();
     if(button.id==='resume')game.resume();
     if(button.id==='restart'){resetMatchStats();game.restart(9271 + ++restartCount);}

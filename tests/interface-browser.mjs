@@ -10,12 +10,17 @@ await runScenario('interface',5192,async({page,url,artifactDir})=>{
  await page.selectOption('#difficulty','hard');assert.match(await page.locator('#records-line').textContent(),/Hard: 3 wins in 4 matches · fewest strikes to win 8 · 2 one-hits/);
  await page.selectOption('#mode','pass-and-play');assert.match(await page.locator('#records-line').textContent(),/Pass & Play: 2 matches · Player 1 1 — 1 Player 2/);
  await page.selectOption('#mode','solo');await captureScreenshot(page,`${artifactDir}/records.png`);
+ // How to play is a modal over the menu, not an inline dropdown; it never shows in-game.
+ assert.equal(await page.locator('#howto-card').isVisible(),false);
+ await page.locator('#how-to-play').click();await page.locator('#howto-card').waitFor();
+ assert.equal(await page.locator('#begin').isVisible(),false,'The menu is covered while the overlay is open');
+ await captureScreenshot(page,`${artifactDir}/how-to-play.png`);
+ await page.locator('#howto-close').click();assert.equal(await page.locator('#howto-card').isVisible(),false);await page.locator('#begin').waitFor();
+ assert.equal(await page.locator('#credits').count(),0,'No credits section');
  // Keyboard-only strike: Space locks each stage; holding Space swings with hold-based power.
  await page.locator('#begin').click();await page.clock.runFor(450);
  // Seeded clock keeps the human as first starter; if the operator starts, let its turn run through.
  for(let i=0;i<4&&(await phase()!=='TARGET_Y'||await page.locator('#app').getAttribute('data-actor')!=='p1');i++)await page.clock.runFor(1500);
- assert.equal(await page.locator('.duel-prompt').getAttribute('data-tutorial'),'true','First match in a mode shows the contextual tutorial');
- assert.match(await page.locator('#hint').textContent(),/First, the height/);
  await page.clock.runFor(200);await page.keyboard.press('Space');assert.equal(await phase(),'TARGET_X');
  await page.clock.runFor(450);await page.keyboard.press('Space');assert.equal(await phase(),'RETICLE');
  await page.clock.runFor(695);await page.keyboard.press('Enter');assert.equal(await phase(),'READY_TO_SWING');
